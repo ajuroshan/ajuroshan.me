@@ -1,6 +1,14 @@
 ---
 import '../styles/global.css';
+import { execSync } from 'node:child_process';
+import pkg from '../../package.json';
 import { profile } from '../data/profile';
+
+// Release CI sets SITE_VERSION to the tag; local builds fall back to package.json.
+const version = process.env.SITE_VERSION ?? `v${pkg.version}`;
+let sha = 'dev';
+try { sha = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch {}
+const repo = 'https://github.com/ajuroshan/ajuroshan.me';
 
 interface Props {
   title?: string;
@@ -61,7 +69,10 @@ const active = (href: string) => (href === '/' ? here === '/' : here.startsWith(
           <label for="cmdin" class="dim">:</label>
           <input id="cmdin" name="c" spellcheck="false" placeholder="help" aria-label="command" />
         </form>
-        <span class="right hide-sm"><span id="clock">--:--</span> IST</span>
+        <span class="right hide-sm">
+          <a class="ver" href={`${repo}/releases/tag/${version}`} title={`build ${sha}`}>{version}</a>
+          <span class="dim"> │ </span><span id="clock">--:--</span> IST
+        </span>
       </nav>
       <p id="cmdout" class="cmdout" role="status" aria-live="polite"></p>
     </footer>
@@ -161,6 +172,7 @@ const active = (href: string) => (href === '/' ? here === '/' : here.startsWith(
       }
       .cmdline input::placeholder { color: #666; }
       .right { color: #bbb; }
+      .ver { color: #7ee2a8; }
       .cmdout {
         display: none; margin: 0; max-width: var(--col); margin: 0 auto;
         padding: 0.2rem 1rem; color: #ddd; white-space: pre-wrap; border-top: 1px solid #333;
