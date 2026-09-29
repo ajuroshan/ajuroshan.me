@@ -3,74 +3,49 @@ import Base from '../layouts/Base.astro';
 import { projects, type Project } from '../data/profile';
 
 const groups: { kind: Project['kind']; title: string; note: string }[] = [
-  { kind: 'prod', title: 'In production', note: 'Systems with real users, run and maintained by me.' },
-  { kind: 'oss', title: 'Open source', note: 'Tools and hardware projects with public code.' },
-  { kind: 'lab', title: 'Experiments & infrastructure', note: 'Things I built to learn, or to run everything else.' },
+  { kind: 'prod', title: 'Production systems', note: 'Built and maintained by me, with real users.' },
+  { kind: 'oss', title: 'Open source', note: 'Tools and hardware with public code.' },
+  { kind: 'lab', title: 'Experiments and infrastructure', note: 'Built to learn, or to run everything else.' },
 ];
-const host = (u: string) => new URL(u).host;
-const short = (u: string) => u.replace('https://github.com/', '');
+const short = (u: string) => u.replace(/^https?:\/\//, '').replace(/\/$/, '');
 ---
-<Base title="Work" description="Production systems, open-source tools and experiments by Ajmal Roshan.">
-  <section class="page-head">
-    <div class="wrap">
-      <p class="eyebrow">Work</p>
-      <h1>Projects</h1>
-      <p class="lede">From university platforms serving thousands of students to firmware on a motorcycle. Production first, then the rest.</p>
-    </div>
-  </section>
+<Base title="Projects" description="A catalogue of production systems, open-source tools and experiments by Ajmal Roshan.">
+  <article class="paper appendix">
+    <p class="sc muted kicker">Appendix A</p>
+    <h1>Project Catalogue</h1>
+    <p class="noindent lede">Every project referenced in the <a href="/">main paper</a>, with links and stack.</p>
 
-  {groups.map((g, gi) => (
-    <section class="group">
-      <div class="wrap">
-        <header class="group-head">
-          <p class="eyebrow"><span class="num">{String(gi + 1).padStart(2, '0')}</span>{g.title}</p>
-          <p class="muted">{g.note}</p>
-        </header>
-        <div class="grid">
-          {projects.filter((p) => p.kind === g.kind).map((p) => (
-            <article class="card">
-              <div class="card-top">
-                <h2>{p.title}</h2>
-                {p.metric && <span class="metric">{p.metric}</span>}
-              </div>
-              <p class="desc">{p.desc}</p>
-              <div class="chips">{p.stack.map((s) => <span class="chip">{s}</span>)}</div>
-              {(p.url || p.repo) && (
-                <div class="card-links mono">
-                  {p.url && <a href={p.url} class="link">{host(p.url)} ↗</a>}
-                  {p.repo && <a href={p.repo} class="link">{short(p.repo)} ↗</a>}
-                </div>
-              )}
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  ))}
+    {groups.map((g) => (
+      <section>
+        <h2>{g.title}</h2>
+        <p class="noindent muted note"><i>{g.note}</i></p>
+        {projects.filter((p) => p.kind === g.kind).map((p) => (
+          <div class="entry">
+            <h3>{p.title}</h3>
+            <p class="noindent">{p.desc}</p>
+            <dl class="meta">
+              {p.metric && <><dt>Scale</dt><dd>{p.metric}</dd></>}
+              <dt>Stack</dt><dd>{p.stack.join(', ')}</dd>
+              {p.url && <><dt>Live</dt><dd><a class="mono" href={p.url}>{short(p.url)}</a></dd></>}
+              {p.repo && <><dt>Code</dt><dd><a class="mono" href={p.repo}>{short(p.repo)}</a></dd></>}
+            </dl>
+          </div>
+        ))}
+      </section>
+    ))}
+  </article>
 </Base>
 
 <style>
-  .page-head { padding: clamp(56px, 8vw, 104px) 0 clamp(32px, 5vw, 56px); }
-  h1 { margin-top: 14px; font-size: clamp(44px, 6vw, 80px); letter-spacing: -0.05em; line-height: 1; }
-  .lede { margin-top: 20px; max-width: 56ch; font-size: 19px; color: var(--ink-2); }
-
-  .group { padding: 48px 0 64px; border-top: 1px solid var(--line); }
-  .group-head { display: flex; justify-content: space-between; align-items: baseline; gap: 24px; flex-wrap: wrap; margin-bottom: 28px; }
-  .group-head .muted { font-size: 15px; }
-
-  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-  .card {
-    display: flex; flex-direction: column; gap: 16px;
-    padding: 28px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);
-    transition: border-color 0.2s ease, transform 0.2s ease;
-  }
-  .card:hover { border-color: var(--line-strong); transform: translateY(-2px); }
-  .card-top { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; }
-  h2 { font-size: 22px; letter-spacing: -0.025em; }
-  .metric { font: 500 12px/1 var(--mono); color: var(--accent); background: var(--accent-soft); padding: 6px 10px; border-radius: 999px; }
-  .desc { color: var(--ink-2); flex: 1; }
-  .card-links { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 13px; padding-top: 16px; border-top: 1px solid var(--line); }
-  .num { color: var(--accent); margin-right: 0.6em; }
-
-  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } .card { padding: 22px; } }
+  .appendix { counter-reset: sec; }
+  .kicker { text-align: center; }
+  h1 { text-align: center; font-weight: 400; font-size: 1.9em; margin: 0.1em 0 0.4em; }
+  .lede { text-align: center; }
+  .note { margin-bottom: 0.4em; }
+  .paper h2::before { content: 'A.' counter(sec); min-width: 2.4em; }
+  .paper h3::before { content: 'A.' counter(sec) '.' counter(sub); min-width: 3.4em; }
+  .entry { margin-bottom: 1.2em; }
+  .meta { display: grid; grid-template-columns: max-content 1fr; gap: 0.1em 1.2em; margin: 0.5em 0 0; font-size: 0.9em; }
+  .meta dt { font-variant-caps: all-small-caps; letter-spacing: 0.06em; color: var(--muted); }
+  .meta dd { margin: 0; }
 </style>

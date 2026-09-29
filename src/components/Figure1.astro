@@ -1,0 +1,62 @@
+---
+// Figure 1: deployment shape, drawn as plain line art like a LaTeX/TikZ figure.
+---
+<figure class="fig">
+  <svg viewBox="0 0 640 250" role="img" aria-labelledby="f1t">
+    <title id="f1t">Clients reach a TLS-terminating Nginx load balancer, which forwards to two Django application servers backed by PostgreSQL, Redis and Celery workers.</title>
+    <defs>
+      <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 1 L9 5 L0 9" fill="none" stroke="currentColor" stroke-width="1.2" />
+      </marker>
+    </defs>
+
+    <g class="edges">
+      <path d="M92 45 C130 45 130 125 168 125" marker-end="url(#ah)" />
+      <path d="M92 125 H168" marker-end="url(#ah)" />
+      <path d="M92 205 C130 205 130 125 168 125" marker-end="url(#ah)" />
+      <path d="M268 118 C300 118 300 70 334 70" marker-end="url(#ah)" />
+      <path d="M268 132 C300 132 300 180 334 180" marker-end="url(#ah)" />
+      <path d="M434 70 H500" marker-end="url(#ah)" />
+      <path d="M434 70 C466 70 466 125 500 125" marker-end="url(#ah)" />
+      <path d="M434 180 C466 180 466 125 500 125" marker-end="url(#ah)" />
+      <path d="M434 180 H500" marker-end="url(#ah)" />
+    </g>
+
+    <g class="nodes">
+      <g><rect x="20" y="30" width="72" height="30" /><text x="56" y="50">browser</text></g>
+      <g><rect x="20" y="110" width="72" height="30" /><text x="56" y="130">iOS app</text></g>
+      <g><rect x="20" y="190" width="72" height="30" /><text x="56" y="210">API client</text></g>
+
+      <g><rect x="168" y="100" width="100" height="50" class="dbl" /><text x="218" y="122">Nginx</text><text x="218" y="140" class="it">TLS, LB</text></g>
+
+      <g><rect x="334" y="48" width="100" height="44" /><text x="384" y="67">Django</text><text x="384" y="84" class="it">app 1</text></g>
+      <g><rect x="334" y="158" width="100" height="44" /><text x="384" y="177">Django</text><text x="384" y="194" class="it">app 2</text></g>
+
+      <g><path d="M500 58 v26 a38 7 0 0 0 76 0 v-26 a38 7 0 0 0 -76 0 a38 7 0 0 0 76 0" class="cyl" /><text x="538" y="80">PostgreSQL</text></g>
+      <g><rect x="500" y="112" width="76" height="26" /><text x="538" y="130">Redis</text></g>
+      <g><rect x="500" y="168" width="76" height="26" /><text x="538" y="186">Celery</text></g>
+    </g>
+
+    <text x="56" y="244" class="lab">clients</text>
+    <text x="218" y="244" class="lab">edge</text>
+    <text x="384" y="244" class="lab">application</text>
+    <text x="538" y="244" class="lab">state &amp; jobs</text>
+  </svg>
+  <figcaption class="caption">
+    <b>Figure 1:</b> The deployment shape shared by most systems in Table&nbsp;1: a TLS-terminating
+    Nginx load balancer in front of stateless Django application servers, with PostgreSQL for
+    state, Redis for caching and queues, and Celery for background work.
+  </figcaption>
+</figure>
+
+<style>
+  .fig { margin: 2em 0 1.8em; }
+  svg { width: 100%; height: auto; color: var(--ink); }
+  .edges path { fill: none; stroke: currentColor; stroke-width: 1; }
+  .nodes rect, .cyl { fill: var(--paper); stroke: currentColor; stroke-width: 1; }
+  .nodes rect.dbl { stroke-width: 2.2; }
+  text { font: 400 13px var(--serif); fill: currentColor; text-anchor: middle; }
+  text.it { font-style: italic; font-size: 12px; fill: var(--ink-2); }
+  text.lab { font-size: 12px; font-variant-caps: all-small-caps; letter-spacing: 0.08em; fill: var(--muted); }
+  .caption { margin-top: 0.8em; }
+</style>

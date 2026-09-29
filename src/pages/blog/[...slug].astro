@@ -9,91 +9,67 @@ export async function getStaticPaths() {
 }
 
 const { post } = Astro.props;
-const { Content, headings } = await render(post);
+const { Content } = await render(post);
 const date = post.data.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-const mins = Math.max(1, Math.round((post.body ?? '').split(/\s+/).filter(Boolean).length / 220));
-const toc = headings.filter((h) => h.depth === 2);
 ---
 <Base title={post.data.title} description={post.data.description}>
-  <article class="wrap article">
-    <header class="head">
-      <a href="/blog/" class="back mono">← All writing</a>
+  <article class="paper">
+    <header class="titleblock">
       <h1>{post.data.title}</h1>
-      <p class="desc">{post.data.description}</p>
-      <div class="byline mono">
-        <span>{profile.name}</span>
-        <span aria-hidden="true">·</span>
-        <time datetime={post.data.date.toISOString()}>{date}</time>
-        <span aria-hidden="true">·</span>
-        <span>{mins} min read</span>
-      </div>
+      <p>{profile.name}</p>
+      <p class="mono"><a href={`mailto:${profile.email}`}>{profile.email}</a></p>
+      <p class="date">{date}</p>
     </header>
 
-    <div class="body">
-      {toc.length > 2 && (
-        <aside class="toc" aria-label="On this page">
-          <p class="eyebrow">On this page</p>
-          <ol>{toc.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}</ol>
-        </aside>
-      )}
-      <div class="prose"><Content /></div>
-    </div>
+    <section class="abstract justify">
+      <h2 class="unnumbered abs-h">Abstract</h2>
+      <p>{post.data.description}</p>
+    </section>
+    {post.data.tags.length > 0 && (
+      <p class="keywords noindent"><b><i>Keywords</i></b>&ensp;{post.data.tags.join(' · ')}</p>
+    )}
 
-    <footer class="end">
-      {post.data.tags.length > 0 && <div class="chips">{post.data.tags.map((t) => <span class="chip">{t}</span>)}</div>}
-      <p class="muted">Thanks for reading. Questions or corrections: <a class="link" href={`mailto:${profile.email}`}>{profile.email}</a></p>
-    </footer>
+    <div class="prose"><Content /></div>
+
+    <p class="back noindent"><a href="/blog/">← All notes</a></p>
   </article>
 </Base>
 
 <style>
-  .article { padding-top: clamp(48px, 7vw, 88px); padding-bottom: 96px; }
-  .head { max-width: 760px; margin: 0 auto 56px; }
-  .back { font-size: 13px; color: var(--muted); }
-  .back:hover { color: var(--accent); }
-  h1 { margin-top: 28px; font-size: clamp(36px, 5vw, 56px); letter-spacing: -0.04em; line-height: 1.06; }
-  .desc { margin-top: 18px; font-size: 20px; line-height: 1.5; color: var(--ink-2); }
-  .byline { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+  .titleblock { text-align: center; margin-bottom: 2em; }
+  h1 { font-size: 1.85em; font-weight: 400; line-height: 1.2; margin-bottom: 0.6em; }
+  .titleblock .mono { font-size: 0.8em; margin-top: 0.2em; }
+  .date { margin-top: 0.8em; }
+  .abstract { margin: 0 3.6em; font-size: 0.9em; }
+  .abs-h { text-align: center; font-size: 1em; margin: 0 0 0.4em; }
+  .keywords { margin: 1.2em 3.6em 0; font-size: 0.9em; }
 
-  .body { position: relative; max-width: 760px; margin: 0 auto; }
-  .toc { position: absolute; right: calc(100% + 56px); width: 200px; top: 0; height: 100%; }
-  .toc > * { position: sticky; top: 100px; }
-  .toc .eyebrow { margin-bottom: 12px; }
-  .toc ol { display: flex; flex-direction: column; gap: 8px; font-size: 14px; top: 130px; }
-  .toc a { color: var(--muted); }
-  .toc a:hover { color: var(--ink); }
-  @media (max-width: 1240px) { .toc { display: none; } }
-
-  .prose { font-size: 18px; line-height: 1.75; color: var(--ink-2); }
-  .prose :global(> * + *) { margin-top: 1.25em; }
-  .prose :global(h2) { margin-top: 2.2em; font-size: 28px; color: var(--ink); letter-spacing: -0.03em; scroll-margin-top: 96px; }
-  .prose :global(h3) { margin-top: 1.8em; font-size: 21px; color: var(--ink); }
-  .prose :global(strong) { color: var(--ink); font-weight: 600; }
-  .prose :global(a) { color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; text-decoration-thickness: 1px; }
-  .prose :global(a:hover) { color: var(--accent); }
-  .prose :global(ul), .prose :global(ol) { padding-left: 1.3em; }
-  .prose :global(ul) { list-style: disc; }
-  .prose :global(ol) { list-style: decimal; }
-  .prose :global(li) { margin-top: 0.5em; padding-left: 0.3em; }
-  .prose :global(li::marker) { color: var(--accent); }
-  .prose :global(blockquote) { margin: 1.6em 0; padding: 4px 0 4px 24px; border-left: 2px solid var(--accent); color: var(--ink); font-size: 20px; }
-  .prose :global(code) { font-family: var(--mono); font-size: 0.86em; background: var(--line); padding: 0.15em 0.4em; border-radius: 5px; color: var(--ink); }
+  .prose { margin-top: 2.2em; }
+  .prose :global(p) { margin: 0; text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
+  .prose :global(p + p) { text-indent: 1.4em; }
+  .prose :global(ul), .prose :global(ol) { margin: 0.5em 0 0.8em; padding-left: 1.4em; }
+  .prose :global(ul li::marker) { content: '–  '; }
+  .prose :global(li) { margin-bottom: 0.3em; }
+  .prose :global(strong) { font-weight: 700; }
+  .prose :global(code) { font-family: var(--mono); font-size: 0.8em; }
   .prose :global(pre) {
-    margin: 1.8em 0; padding: 20px 22px; border: 1px solid var(--line); border-radius: var(--radius);
-    overflow-x: auto; font-size: 14px; line-height: 1.65;
+    margin: 1.2em 0; padding: 0.8em 0; overflow-x: auto;
+    border-top: 0.75px solid var(--rule); border-bottom: 0.75px solid var(--rule);
+    background: transparent !important; font-size: 0.82em; line-height: 1.5;
   }
-  .prose :global(pre code) { background: none; padding: 0; font-size: inherit; color: inherit; }
-  .prose :global(img) { border-radius: var(--radius); border: 1px solid var(--line); }
-  .prose :global(hr) { border: 0; border-top: 1px solid var(--line); margin: 3em 0; }
-  .prose :global(table) { width: 100%; border-collapse: collapse; font-size: 16px; }
-  .prose :global(th), .prose :global(td) { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .prose :global(pre code) { font-size: 1em; }
+  .prose :global(blockquote) { margin: 1em 2em; font-size: 0.95em; }
+  .prose :global(img) { margin: 1.4em auto; }
+  .prose :global(hr) { border: 0; text-align: center; margin: 1.6em 0; }
+  .prose :global(hr)::after { content: '* * *'; letter-spacing: 0.6em; color: var(--muted); }
+  .prose :global(table) { width: 100%; border-collapse: collapse; margin: 1.2em 0; font-size: 0.9em; border-top: 1.5px solid var(--rule); border-bottom: 1.5px solid var(--rule); }
+  .prose :global(thead) { border-bottom: 0.75px solid var(--rule); }
+  .prose :global(th), .prose :global(td) { text-align: left; padding: 0.35em 0.8em 0.35em 0; }
+  .back { margin-top: 3em; }
 
-  @media (prefers-color-scheme: dark) {
-    .prose :global(.astro-code), .prose :global(.astro-code span) {
-      color: var(--shiki-dark) !important;
-      background-color: var(--shiki-dark-bg) !important;
-    }
+  @media (max-width: 900px) {
+    .abstract { margin: 0 0.6em; }
+    .keywords { margin: 1.2em 0.6em 0; }
+    .prose :global(p) { text-align: left; }
   }
-
-  .end { max-width: 760px; margin: 72px auto 0; padding-top: 28px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 20px; }
 </style>

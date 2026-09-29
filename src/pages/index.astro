@@ -1,269 +1,212 @@
 ---
 import Base from '../layouts/Base.astro';
-import SectionHead from '../components/SectionHead.astro';
-import SystemDiagram from '../components/SystemDiagram.astro';
+import Figure1 from '../components/Figure1.astro';
 import { getCollection } from 'astro:content';
-import { profile, stats, experience, projects, capabilities } from '../data/profile';
+import { profile, experience, projects, capabilities } from '../data/profile';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-  .slice(0, 3);
-const featured = projects.filter((p) => p.kind === 'prod');
-const host = (u: string) => new URL(u).host;
+  .slice(0, 5);
 const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+const revised = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+// References, numbered in order of first citation.
+const prod = projects.filter((p) => p.kind === 'prod');
+const other = projects.filter((p) => p.kind !== 'prod' && (p.repo || p.url));
+const refs = [
+  ...prod.map((p) => ({ key: p.name, text: p.title, href: p.url! })),
+  ...other.map((p) => ({ key: p.name, text: p.title, href: (p.repo ?? p.url)! })),
+  { key: 'github', text: 'Source code and public repositories', href: 'https://github.com/ajuroshan' },
+  { key: 'linkedin', text: 'Professional profile', href: 'https://linkedin.com/in/ajuroshan' },
+];
+const n = (key: string) => refs.findIndex((r) => r.key === key) + 1;
+const short = (u: string) => u.replace(/^https?:\/\//, '').replace(/\/$/, '');
 ---
 <Base>
-  <!-- hero -->
-  <section class="hero">
-    <div class="wrap hero-grid">
-      <div class="hero-copy">
-        <p class="status"><span class="pulse" aria-hidden="true"></span>Open to backend & platform roles</p>
-        <h1>I build systems that <span class="serif">thousands</span> of people rely on every day.</h1>
-        <p class="lede">
-          I'm {profile.name}, a {profile.role} based in {profile.location}.
-          I design, ship and operate the platforms behind university admissions, hostel allotment
-          and campus billing — from the Django models to the Nginx config.
+  <article class="paper">
+    <header class="titleblock">
+      <h1>{profile.name}<a href="#fn1" class="fnref" id="fnref1" aria-label="footnote 1">*</a></h1>
+      <p class="role">{profile.role}</p>
+      <p class="affil"><i>{profile.location}</i></p>
+      <p class="mono"><a href={`mailto:${profile.email}`}>{profile.email}</a></p>
+      <p class="date">Last revised {revised}</p>
+    </header>
+
+    <section class="abstract justify">
+      <h2 class="unnumbered abs-h">Abstract</h2>
+      <p>
+        I am a backend and DevOps engineer who designs, ships and operates the software behind
+        university admissions, hostel allotment and campus billing at Cochin University of Science
+        and Technology. These systems process more than ten thousand applications a year and serve
+        several thousand students daily. This page describes that work in the format I read most:
+        the systems (§2), the architecture they share (Figure&nbsp;1), my professional experience (§3),
+        other projects (§4) and the tools I use (§5).
+      </p>
+    </section>
+
+    <p class="keywords noindent"><b><i>Keywords</i></b>&ensp;Django · PostgreSQL · Nginx · Docker · CI/CD · Linux · iOS</p>
+
+    <h2>Introduction</h2>
+    <p>
+      I like owning a system end to end: modelling the data, writing the API, putting it behind a
+      load balancer, and being the one who gets paged when it breaks. Most of what I have built
+      started as a paper process at my university and ended as software that departments now depend
+      on, including the admissions platform <a class="cite" href={`#ref-${n('cusat-fyugp')}`}>[{n('cusat-fyugp')}]</a>,
+      hostel allotment <a class="cite" href={`#ref-${n('cusat-hostels')}`}>[{n('cusat-hostels')}]</a>,
+      mess billing <a class="cite" href={`#ref-${n('messy')}`}>[{n('messy')}]</a> and the
+      cultural-festival registration system <a class="cite" href={`#ref-${n('sargam')}`}>[{n('sargam')}]</a>.
+    </p>
+    <p>
+      I am completing a {profile.education.degree} at {profile.education.school} ({profile.education.year}),
+      and currently work on native iOS applications at Lascade Co.
+    </p>
+
+    <h2>Systems in Production</h2>
+    <p>
+      Table&nbsp;1 lists the systems I built and still maintain. Scale figures are approximate and
+      refer to regular use, not peak events.
+    </p>
+
+    <div class="tbl">
+      <table>
+        <caption><b>Table 1:</b> Production systems, their scale and stack.</caption>
+        <thead>
+          <tr><th>System</th><th class="num">Scale</th><th>Stack</th><th class="num">Ref.</th></tr>
+        </thead>
+        <tbody>
+          {prod.map((p) => (
+            <tr>
+              <td>{p.title}</td>
+              <td class="num">{p.metric}</td>
+              <td>{p.stack.join(', ')}</td>
+              <td class="num"><a href={`#ref-${n(p.name)}`}>[{n(p.name)}]</a></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    {prod.map((p) => (
+      <p class="item noindent"><span class="runin">{p.title}.</span>{p.desc} <a class="cite" href={`#ref-${n(p.name)}`}>[{n(p.name)}]</a></p>
+    ))}
+
+    <Figure1 />
+
+    <h2>Professional Experience</h2>
+    {experience.map((e) => (
+      <div class="job">
+        <p class="noindent">
+          <span class="runin">{e.role},</span> {e.org}. <i class="muted">{e.from} – {e.to}.</i>
         </p>
-        <div class="ctas">
-          <a href="/projects/" class="btn btn-primary">See my work <span class="arrow">→</span></a>
-          <a href={`mailto:${profile.email}`} class="btn btn-ghost">{profile.email}</a>
-        </div>
+        <ul class="points">{e.notes.map((x) => <li>{x}</li>)}</ul>
       </div>
-      <div class="hero-fig">
-        <SystemDiagram />
-      </div>
+    ))}
+
+    <h2>Other Work</h2>
+    <p class="noindent">
+      Outside production systems I build tools and hardware, mostly to scratch my own itch:
+    </p>
+    <ul class="points">
+      {projects.filter((p) => p.kind !== 'prod').map((p) => (
+        <li>
+          <i>{p.title}</i> — {p.desc}
+          {(p.repo || p.url) && <> <a class="cite" href={`#ref-${n(p.name)}`}>[{n(p.name)}]</a></>}
+        </li>
+      ))}
+    </ul>
+
+    <h2>Tools</h2>
+    <div class="tbl">
+      <table>
+        <caption><b>Table 2:</b> Tools I use regularly, by area.</caption>
+        <thead><tr><th>Area</th><th>Tools</th></tr></thead>
+        <tbody>
+          {capabilities.map((c) => (
+            <tr><td class="area">{c.title}</td><td>{c.tools.join(', ')}</td></tr>
+          ))}
+        </tbody>
+      </table>
     </div>
-  </section>
 
-  <!-- impact -->
-  <section aria-label="impact" class="impact">
-    <div class="wrap">
-      <dl class="stats">
-        {stats.map((s) => (
-          <div class="stat">
-            <dt>{s.label}</dt>
-            <dd>{s.value}</dd>
-          </div>
-        ))}
-      </dl>
-    </div>
-  </section>
-
-  <!-- work -->
-  <section class="section" id="work">
-    <div class="wrap">
-      <SectionHead num="01" label="Selected work" title="Production systems with real users and real deadlines." />
-      <ol class="work">
-        {featured.map((p, i) => (
-          <li>
-            <a href={p.url ?? p.repo} class="work-row">
-              <span class="work-idx mono">{String(i + 1).padStart(2, '0')}</span>
-              <div class="work-main">
-                <h3>{p.title}</h3>
-                <p>{p.desc}</p>
-                <div class="chips">{p.stack.map((s) => <span class="chip">{s}</span>)}</div>
-              </div>
-              <div class="work-side">
-                {p.metric && <span class="work-metric">{p.metric}</span>}
-                {p.url && <span class="mono muted work-host">{host(p.url)} <span class="arrow">↗</span></span>}
-              </div>
-            </a>
-          </li>
-        ))}
-      </ol>
-      <p class="more"><a href="/projects/" class="link">All projects, open source and experiments →</a></p>
-    </div>
-  </section>
-
-  <!-- about + experience -->
-  <section class="section" id="about">
-    <div class="wrap split">
-      <SectionHead num="02" label="About" title="Engineer first, across the whole stack." />
-      <div class="about-body">
-        <p class="about-lead">
-          I like owning a system end to end: modelling the data, writing the API, putting it behind
-          a load balancer, and being the one who gets paged. Most of what I've built started as a paper
-          process at my university and ended as software that departments now depend on.
-        </p>
-        <dl class="facts">
-          <div><dt>Education</dt><dd>{profile.education.degree}<br /><span class="muted">{profile.education.school}, {profile.education.year}</span></dd></div>
-          <div><dt>Based in</dt><dd>{profile.location}</dd></div>
-        </dl>
-
-        <h3 class="sub-h eyebrow">Experience</h3>
-        <ol class="timeline">
-          {experience.map((e) => (
+    {posts.length > 0 && (
+      <>
+        <h2>Notes</h2>
+        <p class="noindent">Shorter write-ups on building and operating these systems. All notes are listed <a href="/blog/">here</a>; there is also an <a href="/rss.xml">RSS feed</a>.</p>
+        <ol class="notes">
+          {posts.map((p, i) => (
             <li>
-              <p class="t-when mono">{e.from} — {e.to}</p>
-              <div>
-                <h4>{e.role} <span class="muted">· {e.org}</span></h4>
-                <ul class="t-notes">{e.notes.map((n) => <li>{n}</li>)}</ul>
-                <div class="chips">{e.stack.map((s) => <span class="chip">{s}</span>)}</div>
-              </div>
+              <span class="nn">{i + 1}.</span>
+              <a href={`/blog/${p.id}/`}>{p.data.title}</a>
+              <span class="leader" aria-hidden="true"></span>
+              <span class="muted nowrap">{fmt(p.data.date)}</span>
             </li>
           ))}
         </ol>
-      </div>
-    </div>
-  </section>
+      </>
+    )}
 
-  <!-- capabilities -->
-  <section class="section" id="stack">
-    <div class="wrap">
-      <SectionHead num="03" label="Capabilities" title="What I reach for." />
-      <div class="caps">
-        {capabilities.map((c) => (
-          <article class="cap">
-            <h3>{c.title}</h3>
-            <p>{c.body}</p>
-            <ul class="cap-tools mono">{c.tools.map((t) => <li>{t}</li>)}</ul>
-          </article>
-        ))}
-      </div>
-    </div>
-  </section>
+    <h2 class="unnumbered">References</h2>
+    <ol class="refs">
+      {refs.map((r, i) => (
+        <li id={`ref-${i + 1}`}>
+          <span class="rn">[{i + 1}]</span>
+          <span>{r.text}. <a href={r.href} class="mono">{short(r.href)}</a></span>
+        </li>
+      ))}
+    </ol>
 
-  <!-- writing -->
-  <section class="section" id="writing">
-    <div class="wrap">
-      <SectionHead num="04" label="Writing" title="Notes from building and operating things." />
-      <ul class="posts">
-        {posts.map((p) => (
-          <li>
-            <a href={`/blog/${p.id}/`} class="post-row">
-              <time class="mono muted" datetime={p.data.date.toISOString()}>{fmt(p.data.date)}</time>
-              <div>
-                <h3>{p.data.title}</h3>
-                <p class="muted">{p.data.description}</p>
-              </div>
-              <span class="arrow" aria-hidden="true">→</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-      <p class="more"><a href="/blog/" class="link">All writing →</a></p>
-    </div>
-  </section>
-
-  <!-- contact -->
-  <section class="contact">
-    <div class="wrap contact-in">
-      <p class="eyebrow"><span class="num">05</span>Contact</p>
-      <h2>Have a system that needs to <span class="serif">hold up</span> under load?</h2>
-      <p class="muted contact-lede">I'm open to backend, platform and DevOps work. The fastest way to reach me is email.</p>
-      <div class="ctas">
-        <a href={`mailto:${profile.email}`} class="btn btn-primary">Email me <span class="arrow">→</span></a>
-        <a href="https://linkedin.com/in/ajuroshan" class="btn btn-ghost">LinkedIn</a>
-        <a href="https://github.com/ajuroshan" class="btn btn-ghost">GitHub</a>
-      </div>
-    </div>
-  </section>
+    <hr class="fnrule" />
+    <p class="footnote noindent" id="fn1">
+      <a href="#fnref1">*</a> Correspondence: <a href={`mailto:${profile.email}`}>{profile.email}</a>.
+      Open to backend, platform and DevOps roles.
+    </p>
+  </article>
 </Base>
 
 <style>
-  /* hero */
-  .hero { padding: clamp(56px, 9vw, 112px) 0 clamp(56px, 8vw, 96px); }
-  .hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: clamp(40px, 5vw, 72px); align-items: center; }
-  .status {
-    display: inline-flex; align-items: center; gap: 10px; margin-bottom: 28px;
-    font: 500 13px/1 var(--mono); color: var(--ink-2);
-    border: 1px solid var(--line); background: var(--surface); padding: 8px 14px 8px 12px; border-radius: 999px;
+  .titleblock { text-align: center; margin-bottom: 2.2em; }
+  h1 { font-size: 2.1em; font-weight: 400; line-height: 1.15; letter-spacing: 0.005em; margin-bottom: 0.5em; }
+  .fnref { font-size: 0.45em; vertical-align: super; margin-left: 0.1em; color: var(--ink); }
+  .role { font-size: 1.1em; }
+  .affil { margin-top: 0.1em; }
+  .titleblock .mono { margin-top: 0.3em; font-size: 0.8em; }
+  .date { margin-top: 1em; }
+
+  .abstract { margin: 0 3.6em; font-size: 0.9em; }
+  .abs-h { text-align: center; font-size: 1em; margin: 0 0 0.4em; }
+  .keywords { margin: 1.3em 3.6em 0; font-size: 0.9em; text-indent: 0; }
+
+  .item { margin-top: 0.7em; }
+  .item:first-of-type { margin-top: 0; }
+  .job { margin-bottom: 1em; }
+  .points { margin: 0.35em 0 0; padding-left: 1.4em; }
+  .points li { margin-bottom: 0.25em; }
+  .points li::marker { content: '–  '; }
+  .area { font-weight: 600; white-space: nowrap; }
+
+  .notes { list-style: none; padding: 0; margin: 0.6em 0 0; }
+  .nn { min-width: 1.4em; color: var(--muted); }
+  .notes li { display: flex; align-items: baseline; gap: 0.5em; margin-bottom: 0.2em; }
+  .leader { flex: 1; border-bottom: 1.5px dotted var(--hair); transform: translateY(-0.3em); min-width: 1em; }
+  .nowrap { white-space: nowrap; }
+
+  .refs { list-style: none; padding: 0; margin: 0.6em 0 0; font-size: 0.9em; }
+  .refs li { display: grid; grid-template-columns: 2.4em 1fr; margin-bottom: 0.35em; }
+  .refs li:target { background: #f6efd6; }
+  .rn { color: var(--ink-2); }
+  .refs .mono { word-break: break-all; }
+
+  .fnrule { width: 30%; margin: 2.4em 0 0.6em; border: 0; border-top: 0.75px solid var(--rule); }
+  .footnote { font-size: 0.82em; }
+  .footnote:target { background: #f6efd6; }
+
+  @media (max-width: 900px) {
+    .abstract { margin: 0 0.6em; }
+    .keywords { margin: 1.2em 0.6em 0; }
+    h1 { font-size: 1.8em; }
   }
-  .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.5); animation: pulse 2.2s infinite; }
-  @keyframes pulse { 70% { box-shadow: 0 0 0 8px rgba(22, 163, 74, 0); } 100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); } }
-  h1 { font-size: clamp(40px, 5.6vw, 72px); line-height: 1.02; letter-spacing: -0.045em; font-weight: 600; }
-  h1 .serif, h2 .serif { font-size: 1.08em; letter-spacing: -0.02em; color: var(--accent); }
-  .lede { margin-top: 24px; font-size: clamp(17px, 1.5vw, 19px); color: var(--ink-2); max-width: 52ch; }
-  .ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 36px; }
-
-  /* impact */
-  .impact { border-top: 1px solid var(--line); }
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); margin: 0; }
-  .stat { display: flex; flex-direction: column-reverse; gap: 8px; padding: 36px 24px 36px 0; }
-  .stat + .stat { border-left: 1px solid var(--line); padding-left: 24px; }
-  .stat dd { margin: 0; font-size: clamp(36px, 4.4vw, 56px); font-weight: 600; letter-spacing: -0.04em; line-height: 1; }
-  .stat dt { color: var(--muted); font-size: 14px; line-height: 1.45; max-width: 24ch; }
-
-  /* work */
-  .work { border-top: 1px solid var(--line); }
-  .work > li { border-bottom: 1px solid var(--line); }
-  .work-row {
-    display: grid; grid-template-columns: 56px 1fr 220px; gap: 24px; padding: 32px 0;
-    transition: background 0.2s ease, padding 0.2s ease;
+  @media (max-width: 560px) {
+    .tbl { overflow-x: auto; }
+    .tbl td:nth-child(3), .tbl th:nth-child(3) { display: none; }
   }
-  .work-row:hover { background: var(--surface); padding-left: 16px; padding-right: 16px; }
-  .work-idx { color: var(--muted); font-size: 13px; padding-top: 6px; }
-  .work-main h3 { font-size: clamp(22px, 2.4vw, 28px); letter-spacing: -0.025em; margin-bottom: 10px; }
-  .work-row:hover h3 { color: var(--accent); }
-  .work-main p { color: var(--ink-2); max-width: 60ch; margin-bottom: 16px; }
-  .work-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; text-align: right; padding-top: 6px; }
-  .work-metric { font-weight: 600; font-size: 17px; letter-spacing: -0.01em; }
-  .work-host { font-size: 12px; }
-  .more { margin-top: 32px; font-weight: 500; }
-
-  /* about */
-  .split { display: grid; grid-template-columns: 1fr 1.35fr; gap: 48px 80px; }
-  .split :global(.section-head) { align-self: start; position: sticky; top: 104px; }
-  .about-lead { font-size: clamp(19px, 1.8vw, 22px); line-height: 1.55; letter-spacing: -0.01em; color: var(--ink); }
-  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 40px 0 56px; padding: 24px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-  .facts dt { font: 500 12px/1.4 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
-  .facts dd { margin: 0; }
-  .sub-h { margin-bottom: 20px; }
-  .timeline > li { display: grid; grid-template-columns: 170px 1fr; gap: 24px; padding: 24px 0; border-top: 1px solid var(--line); }
-  .t-when { font-size: 13px; color: var(--muted); padding-top: 3px; }
-  .timeline h4 { font-size: 18px; letter-spacing: -0.015em; margin-bottom: 10px; font-weight: 600; }
-  .t-notes { margin-bottom: 14px; color: var(--ink-2); }
-  .t-notes li { position: relative; padding-left: 18px; margin-bottom: 6px; }
-  .t-notes li::before { content: ''; position: absolute; left: 0; top: 0.72em; width: 8px; height: 1px; background: var(--accent); }
-
-  /* capabilities */
-  .caps { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
-  .cap { padding: 28px 24px 32px; }
-  .cap + .cap { border-left: 1px solid var(--line); }
-  .cap h3 { font-size: 19px; margin-bottom: 10px; }
-  .cap p { color: var(--ink-2); font-size: 15px; margin-bottom: 20px; }
-  .cap-tools { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
-  .cap-tools li::before { content: '— '; color: var(--line-strong); }
-
-  /* writing */
-  .posts { border-top: 1px solid var(--line); }
-  .posts > li { border-bottom: 1px solid var(--line); }
-  .post-row { display: grid; grid-template-columns: 160px 1fr 24px; gap: 24px; padding: 28px 0; align-items: baseline; }
-  .post-row time { font-size: 13px; }
-  .post-row h3 { font-size: 20px; letter-spacing: -0.02em; margin-bottom: 6px; }
-  .post-row:hover h3 { color: var(--accent); }
-  .post-row .arrow { transition: transform 0.15s ease; color: var(--muted); }
-  .post-row:hover .arrow { transform: translateX(4px); color: var(--accent); }
-
-  /* contact */
-  .contact { padding: clamp(80px, 12vw, 152px) 0; border-top: 1px solid var(--line); background: var(--surface); }
-  .contact-in { text-align: center; display: flex; flex-direction: column; align-items: center; }
-  .contact h2 { margin-top: 20px; font-size: clamp(34px, 5vw, 64px); letter-spacing: -0.045em; line-height: 1.05; max-width: 18ch; }
-  .contact-lede { margin-top: 20px; max-width: 48ch; }
-  .contact .ctas { justify-content: center; }
-
-  @media (max-width: 960px) {
-    .hero-grid { grid-template-columns: 1fr; }
-    .stats { grid-template-columns: repeat(2, 1fr); }
-    .stat:nth-child(3) { border-left: 0; padding-left: 0; }
-    .stat:nth-child(n + 3) { border-top: 1px solid var(--line); }
-    .split { grid-template-columns: 1fr; }
-    .split :global(.section-head) { position: static; }
-    .caps { grid-template-columns: repeat(2, 1fr); }
-    .cap:nth-child(3) { border-left: 0; }
-    .cap:nth-child(n + 3) { border-top: 1px solid var(--line); }
-  }
-  @media (max-width: 640px) {
-    .work-row { grid-template-columns: 1fr; gap: 10px; padding: 28px 0; }
-    .work-row:hover { padding-left: 0; padding-right: 0; background: none; }
-    .work-side { align-items: flex-start; text-align: left; flex-direction: row; flex-wrap: wrap; gap: 12px; padding: 0; }
-    .work-idx { display: none; }
-    .timeline > li { grid-template-columns: 1fr; gap: 6px; }
-    .facts { grid-template-columns: 1fr; }
-    .caps { grid-template-columns: 1fr; }
-    .cap + .cap { border-left: 0; border-top: 1px solid var(--line); }
-    .post-row { grid-template-columns: 1fr; gap: 6px; }
-    .post-row .arrow { display: none; }
-  }
-  @media (max-width: 560px) { .hero-fig { display: none; } }
 </style>
