@@ -1,12 +1,20 @@
 ---
 import Base from '../layouts/Base.astro';
-import Prompt from '../components/Prompt.astro';
 ---
-<Base title="404">
-  <Prompt as="div" cmd={`cd ${Astro.url.pathname}`} />
-  <div class="out">
-    <h1 class="r">bash: cd: no such file or directory (404)</h1>
-    <p class="c" style="margin-top:1em"># try one of these</p>
-    <p><a href="/">cd ~</a> · <a href="/projects/">cd ~/projects</a> · <a href="/blog/">cd ~/blog</a></p>
-  </div>
+<Base title="Not found">
+  <section class="wrap nf">
+    <p class="eyebrow"><span class="num">404</span>Not found</p>
+    <h1>This page doesn't exist.</h1>
+    <p class="muted">It may have moved, or the link was wrong.</p>
+    <div class="ctas">
+      <a href="/" class="btn btn-primary">Go home <span class="arrow">→</span></a>
+      <a href="/projects/" class="btn btn-ghost">See work</a>
+    </div>
+  </section>
 </Base>
+<style>
+  .nf { padding: clamp(96px, 16vw, 200px) var(--gutter); min-height: 60vh; }
+  h1 { margin: 18px 0 14px; font-size: clamp(40px, 6vw, 72px); letter-spacing: -0.05em; }
+  .num { color: var(--accent); margin-right: 0.6em; }
+  .ctas { display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
+</style>

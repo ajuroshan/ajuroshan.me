@@ -1,6 +1,6 @@
 ---
 title: How this site is built and shipped
-description: Astro, 0 KB of framework JavaScript, nginx on an always-free Oracle Cloud VM, and a 15-line deploy script.
+description: Astro, zero client-side JavaScript, nginx on an always-free Oracle Cloud VM, and tag-driven releases.
 date: 2026-09-29
 tags: [astro, nginx, oci, devops]
 ---
@@ -9,12 +9,14 @@ This site is deliberately boring infrastructure: static HTML, one small VM, one 
 
 ## Stack
 
-- **[Astro](https://astro.build)**: renders every page to plain HTML at build time. The only client-side script is the status-bar command line at the bottom (press `:`).
+- **[Astro](https://astro.build)**: renders every page to plain HTML at build time. The site ships no client-side JavaScript at all; even the architecture diagram on the home page is animated with SVG.
 - **Markdown content collections**: every post is a `.md` file with a typed frontmatter schema, so a missing date fails the build rather than the page.
-- **JetBrains Mono**, self-hosted. No third-party requests.
+- **Geist** and **Instrument Serif**, self-hosted. No third-party requests.
 - **nginx** on an Oracle Cloud *Always Free* `VM.Standard.E2.1.Micro` with 1 GB of RAM.
 
 ## Deploys
+
+Production only changes when I push a `vX.Y.Z` tag. GitHub Actions builds the site, attaches the build to a GitHub Release, and ships that exact tarball.
 
 A build is a directory of files, so a deploy is a copy plus a symlink swap:
 

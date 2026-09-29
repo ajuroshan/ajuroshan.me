@@ -1,7 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
-import Prompt from '../../components/Prompt.astro';
 import { getCollection, render } from 'astro:content';
+import { profile } from '../../data/profile';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog', ({ data }) => !data.draft);
@@ -10,60 +10,90 @@ export async function getStaticPaths() {
 
 const { post } = Astro.props;
 const { Content, headings } = await render(post);
-const iso = post.data.date.toISOString().slice(0, 10);
+const date = post.data.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+const mins = Math.max(1, Math.round((post.body ?? '').split(/\s+/).filter(Boolean).length / 220));
 const toc = headings.filter((h) => h.depth === 2);
 ---
 <Base title={post.data.title} description={post.data.description}>
-  <Prompt as="div" path="~/blog" cmd={`less ${post.id}.md`} />
-  <article class="out">
-    <header class="meta">
-      <pre class="fm"><span class="dim">---</span>
-<span class="k">title</span>: <span class="s">"{post.data.title}"</span>
-<span class="k">date</span>:  <span class="n">{iso}</span>
-{post.data.tags.length > 0 && <><span class="k">tags</span>:  [{post.data.tags.join(', ')}]{'\n'}</>}<span class="dim">---</span></pre>
-      <h1 class="title">{post.data.title}</h1>
+  <article class="wrap article">
+    <header class="head">
+      <a href="/blog/" class="back mono">← All writing</a>
+      <h1>{post.data.title}</h1>
+      <p class="desc">{post.data.description}</p>
+      <div class="byline mono">
+        <span>{profile.name}</span>
+        <span aria-hidden="true">·</span>
+        <time datetime={post.data.date.toISOString()}>{date}</time>
+        <span aria-hidden="true">·</span>
+        <span>{mins} min read</span>
+      </div>
     </header>
 
-    {toc.length > 2 && (
-      <nav class="toc" aria-label="contents">
-        <span class="c"># contents</span>
-        <ol>{toc.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}</ol>
-      </nav>
-    )}
+    <div class="body">
+      {toc.length > 2 && (
+        <aside class="toc" aria-label="On this page">
+          <p class="eyebrow">On this page</p>
+          <ol>{toc.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}</ol>
+        </aside>
+      )}
+      <div class="prose"><Content /></div>
+    </div>
 
-    <div class="prose"><Content /></div>
-
-    <p class="end c">(END) — <a href="/blog/">q</a> to quit</p>
+    <footer class="end">
+      {post.data.tags.length > 0 && <div class="chips">{post.data.tags.map((t) => <span class="chip">{t}</span>)}</div>}
+      <p class="muted">Thanks for reading. Questions or corrections: <a class="link" href={`mailto:${profile.email}`}>{profile.email}</a></p>
+    </footer>
   </article>
 </Base>
 
 <style>
-  .fm { margin: 0 0 1.2em; font: inherit; color: var(--muted); }
-  .title { font-size: 1.6em; line-height: 1.25; letter-spacing: -0.02em; margin-bottom: 1.2em; }
-  .toc { border-left: 2px solid var(--rule); padding-left: 2ch; margin-bottom: 2em; }
-  .toc ol { margin: 0.3em 0 0; padding-left: 3ch; }
-  .end { margin-top: 3em; }
+  .article { padding-top: clamp(48px, 7vw, 88px); padding-bottom: 96px; }
+  .head { max-width: 760px; margin: 0 auto 56px; }
+  .back { font-size: 13px; color: var(--muted); }
+  .back:hover { color: var(--accent); }
+  h1 { margin-top: 28px; font-size: clamp(36px, 5vw, 56px); letter-spacing: -0.04em; line-height: 1.06; }
+  .desc { margin-top: 18px; font-size: 20px; line-height: 1.5; color: var(--ink-2); }
+  .byline { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
 
-  .prose { max-width: 76ch; }
-  .prose :global(h2) { margin: 2.2em 0 0.6em; }
-  .prose :global(h2)::before { content: '## '; color: var(--faint); }
-  .prose :global(h3) { margin: 1.8em 0 0.5em; }
-  .prose :global(h3)::before { content: '### '; color: var(--faint); }
-  .prose :global(ul), .prose :global(ol) { margin: 0 0 1em; padding-left: 3ch; }
-  .prose :global(ul) { list-style: none; }
-  .prose :global(ul > li)::before { content: '- '; color: var(--faint); margin-left: -2ch; }
-  .prose :global(li) { margin-bottom: 0.3em; }
-  .prose :global(blockquote) {
-    margin: 0 0 1em; padding-left: 2ch; border-left: 2px solid var(--fg); color: var(--muted);
-  }
-  .prose :global(code) { background: var(--bg-alt); padding: 0.05em 0.4ch; font-size: 0.95em; }
+  .body { position: relative; max-width: 760px; margin: 0 auto; }
+  .toc { position: absolute; right: calc(100% + 56px); width: 200px; top: 0; height: 100%; }
+  .toc > * { position: sticky; top: 100px; }
+  .toc .eyebrow { margin-bottom: 12px; }
+  .toc ol { display: flex; flex-direction: column; gap: 8px; font-size: 14px; top: 130px; }
+  .toc a { color: var(--muted); }
+  .toc a:hover { color: var(--ink); }
+  @media (max-width: 1240px) { .toc { display: none; } }
+
+  .prose { font-size: 18px; line-height: 1.75; color: var(--ink-2); }
+  .prose :global(> * + *) { margin-top: 1.25em; }
+  .prose :global(h2) { margin-top: 2.2em; font-size: 28px; color: var(--ink); letter-spacing: -0.03em; scroll-margin-top: 96px; }
+  .prose :global(h3) { margin-top: 1.8em; font-size: 21px; color: var(--ink); }
+  .prose :global(strong) { color: var(--ink); font-weight: 600; }
+  .prose :global(a) { color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+  .prose :global(a:hover) { color: var(--accent); }
+  .prose :global(ul), .prose :global(ol) { padding-left: 1.3em; }
+  .prose :global(ul) { list-style: disc; }
+  .prose :global(ol) { list-style: decimal; }
+  .prose :global(li) { margin-top: 0.5em; padding-left: 0.3em; }
+  .prose :global(li::marker) { color: var(--accent); }
+  .prose :global(blockquote) { margin: 1.6em 0; padding: 4px 0 4px 24px; border-left: 2px solid var(--accent); color: var(--ink); font-size: 20px; }
+  .prose :global(code) { font-family: var(--mono); font-size: 0.86em; background: var(--line); padding: 0.15em 0.4em; border-radius: 5px; color: var(--ink); }
   .prose :global(pre) {
-    background: #f6f8fa !important; border: 1px solid var(--rule);
-    padding: 1em 2ch; overflow-x: auto; margin: 0 0 1.2em; font-size: 0.93em; line-height: 1.5;
+    margin: 1.8em 0; padding: 20px 22px; border: 1px solid var(--line); border-radius: var(--radius);
+    overflow-x: auto; font-size: 14px; line-height: 1.65;
   }
-  .prose :global(pre code) { background: none; padding: 0; }
-  .prose :global(img) { max-width: 100%; border: 1px solid var(--rule); }
-  .prose :global(hr) { margin: 2em 0; }
-  .prose :global(table) { border-collapse: collapse; margin-bottom: 1em; }
-  .prose :global(th), .prose :global(td) { border: 1px solid var(--rule); padding: 0.2em 1ch; }
+  .prose :global(pre code) { background: none; padding: 0; font-size: inherit; color: inherit; }
+  .prose :global(img) { border-radius: var(--radius); border: 1px solid var(--line); }
+  .prose :global(hr) { border: 0; border-top: 1px solid var(--line); margin: 3em 0; }
+  .prose :global(table) { width: 100%; border-collapse: collapse; font-size: 16px; }
+  .prose :global(th), .prose :global(td) { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+
+  @media (prefers-color-scheme: dark) {
+    .prose :global(.astro-code), .prose :global(.astro-code span) {
+      color: var(--shiki-dark) !important;
+      background-color: var(--shiki-dark-bg) !important;
+    }
+  }
+
+  .end { max-width: 760px; margin: 72px auto 0; padding-top: 28px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 20px; }
 </style>

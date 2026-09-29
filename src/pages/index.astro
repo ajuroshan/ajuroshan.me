@@ -1,107 +1,269 @@
 ---
 import Base from '../layouts/Base.astro';
-import Prompt from '../components/Prompt.astro';
+import SectionHead from '../components/SectionHead.astro';
+import SystemDiagram from '../components/SystemDiagram.astro';
 import { getCollection } from 'astro:content';
-import { profile, experience, projects, stack } from '../data/profile';
+import { profile, stats, experience, projects, capabilities } from '../data/profile';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-  .slice(0, 5);
+  .slice(0, 3);
 const featured = projects.filter((p) => p.kind === 'prod');
-const iso = (d: Date) => d.toISOString().slice(0, 10);
 const host = (u: string) => new URL(u).host;
+const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 ---
 <Base>
-  <Prompt as="div" cmd="whoami" />
-  <div class="out">
-    <h1 class="name">{profile.name}</h1>
-    <p><span class="c"># </span>{profile.role}. {profile.summary}</p>
-    <dl class="kv">
-      <dt>location</dt><dd>{profile.location}</dd>
-      <dt>education</dt><dd>{profile.education}</dd>
-      <dt>focus</dt><dd>Django/DRF services · Linux + Docker ops · iOS</dd>
-      <dt>links</dt>
-      <dd>{profile.links.map((l, i) => (<>{i > 0 && <span class="dim"> · </span>}<a href={l.href}>{l.label}</a></>))}</dd>
-    </dl>
-  </div>
-
-  <Prompt cmd="cat ~/experience.log" id="experience" />
-  <div class="out">
-    {experience.map((e) => (
-      <div class="job">
-        <p class="job-head">
-          <span class="n">[{e.from} → {e.to}]</span> <strong>{e.role}</strong> <span class="c">@</span> {e.org}
+  <!-- hero -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <p class="status"><span class="pulse" aria-hidden="true"></span>Open to backend & platform roles</p>
+        <h1>I build systems that <span class="serif">thousands</span> of people rely on every day.</h1>
+        <p class="lede">
+          I'm {profile.name}, a {profile.role} based in {profile.location}.
+          I design, ship and operate the platforms behind university admissions, hostel allotment
+          and campus billing — from the Django models to the Nginx config.
         </p>
-        <ul class="bullets">
-          {e.notes.map((n) => <li>{n}</li>)}
-        </ul>
-        <div>{e.stack.map((s) => <span class="tag">{s}</span>)}</div>
+        <div class="ctas">
+          <a href="/projects/" class="btn btn-primary">See my work <span class="arrow">→</span></a>
+          <a href={`mailto:${profile.email}`} class="btn btn-ghost">{profile.email}</a>
+        </div>
       </div>
-    ))}
-  </div>
+      <div class="hero-fig">
+        <SystemDiagram />
+      </div>
+    </div>
+  </section>
 
-  <Prompt cmd="systemctl list-units --type=service --state=running" id="projects" />
-  <div class="out">
-    <p class="c"># production systems I built and run</p>
-    <ul class="units">
-      {featured.map((p) => (
-        <li>
-          <div class="unit-head">
-            <span><span class="s">●</span> {p.url ? <a href={p.url}>{p.name}.service</a> : `${p.name}.service`}</span>
-            <span class="c hide-sm">active (running)</span>
-            <span class="n unit-metric">{p.metric}</span>
+  <!-- impact -->
+  <section aria-label="impact" class="impact">
+    <div class="wrap">
+      <dl class="stats">
+        {stats.map((s) => (
+          <div class="stat">
+            <dt>{s.label}</dt>
+            <dd>{s.value}</dd>
           </div>
-          <p class="unit-desc">{p.desc}{p.url && <span class="c"> — {host(p.url)}</span>}</p>
-        </li>
-      ))}
-    </ul>
-    <p class="more"><span class="c">{featured.length} loaded units listed.</span> <a href="/projects/">ls ~/projects →</a></p>
-  </div>
+        ))}
+      </dl>
+    </div>
+  </section>
 
-  <Prompt cmd="ls -lt ~/blog | head -5" id="blog" />
-  <div class="out">
-    {posts.length === 0 ? (
-      <p class="c">total 0</p>
-    ) : (
-      <ul>
+  <!-- work -->
+  <section class="section" id="work">
+    <div class="wrap">
+      <SectionHead num="01" label="Selected work" title="Production systems with real users and real deadlines." />
+      <ol class="work">
+        {featured.map((p, i) => (
+          <li>
+            <a href={p.url ?? p.repo} class="work-row">
+              <span class="work-idx mono">{String(i + 1).padStart(2, '0')}</span>
+              <div class="work-main">
+                <h3>{p.title}</h3>
+                <p>{p.desc}</p>
+                <div class="chips">{p.stack.map((s) => <span class="chip">{s}</span>)}</div>
+              </div>
+              <div class="work-side">
+                {p.metric && <span class="work-metric">{p.metric}</span>}
+                {p.url && <span class="mono muted work-host">{host(p.url)} <span class="arrow">↗</span></span>}
+              </div>
+            </a>
+          </li>
+        ))}
+      </ol>
+      <p class="more"><a href="/projects/" class="link">All projects, open source and experiments →</a></p>
+    </div>
+  </section>
+
+  <!-- about + experience -->
+  <section class="section" id="about">
+    <div class="wrap split">
+      <SectionHead num="02" label="About" title="Engineer first, across the whole stack." />
+      <div class="about-body">
+        <p class="about-lead">
+          I like owning a system end to end: modelling the data, writing the API, putting it behind
+          a load balancer, and being the one who gets paged. Most of what I've built started as a paper
+          process at my university and ended as software that departments now depend on.
+        </p>
+        <dl class="facts">
+          <div><dt>Education</dt><dd>{profile.education.degree}<br /><span class="muted">{profile.education.school}, {profile.education.year}</span></dd></div>
+          <div><dt>Based in</dt><dd>{profile.location}</dd></div>
+        </dl>
+
+        <h3 class="sub-h eyebrow">Experience</h3>
+        <ol class="timeline">
+          {experience.map((e) => (
+            <li>
+              <p class="t-when mono">{e.from} — {e.to}</p>
+              <div>
+                <h4>{e.role} <span class="muted">· {e.org}</span></h4>
+                <ul class="t-notes">{e.notes.map((n) => <li>{n}</li>)}</ul>
+                <div class="chips">{e.stack.map((s) => <span class="chip">{s}</span>)}</div>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- capabilities -->
+  <section class="section" id="stack">
+    <div class="wrap">
+      <SectionHead num="03" label="Capabilities" title="What I reach for." />
+      <div class="caps">
+        {capabilities.map((c) => (
+          <article class="cap">
+            <h3>{c.title}</h3>
+            <p>{c.body}</p>
+            <ul class="cap-tools mono">{c.tools.map((t) => <li>{t}</li>)}</ul>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- writing -->
+  <section class="section" id="writing">
+    <div class="wrap">
+      <SectionHead num="04" label="Writing" title="Notes from building and operating things." />
+      <ul class="posts">
         {posts.map((p) => (
-          <li class="post-row">
-            <time class="n" datetime={p.data.date.toISOString()}>{iso(p.data.date)}</time>
-            <a href={`/blog/${p.id}/`}>{p.data.title}</a>
+          <li>
+            <a href={`/blog/${p.id}/`} class="post-row">
+              <time class="mono muted" datetime={p.data.date.toISOString()}>{fmt(p.data.date)}</time>
+              <div>
+                <h3>{p.data.title}</h3>
+                <p class="muted">{p.data.description}</p>
+              </div>
+              <span class="arrow" aria-hidden="true">→</span>
+            </a>
           </li>
         ))}
       </ul>
-    )}
-    <p class="more"><a href="/blog/">cd ~/blog →</a></p>
-  </div>
+      <p class="more"><a href="/blog/" class="link">All writing →</a></p>
+    </div>
+  </section>
 
-  <Prompt cmd="cat ~/.stack.toml" id="stack" />
-  <div class="out">
-    <pre class="toml">{Object.entries(stack).map(([k, v]) => (
-<><span class="k">[{k}]</span>{'\n'}<span>tools</span> = [{v.map((t, i) => <><span class="s">"{t}"</span>{i < v.length - 1 ? ', ' : ''}</>)}]{'\n\n'}</>))}</pre>
-  </div>
-
-  <Prompt cmd="echo $CONTACT" id="contact" />
-  <div class="out">
-    <p>Open to backend, platform and DevOps work. Fastest reply: <a href="mailto:ajuaju0483@gmail.com">ajuaju0483@gmail.com</a></p>
-  </div>
-
-  <div class="cmd"><span class="ps1">ajmal@ajuroshan</span><span class="dim">:</span><span class="path">~</span><span class="dim">$ </span><span class="cursor" aria-hidden="true"></span></div>
+  <!-- contact -->
+  <section class="contact">
+    <div class="wrap contact-in">
+      <p class="eyebrow"><span class="num">05</span>Contact</p>
+      <h2>Have a system that needs to <span class="serif">hold up</span> under load?</h2>
+      <p class="muted contact-lede">I'm open to backend, platform and DevOps work. The fastest way to reach me is email.</p>
+      <div class="ctas">
+        <a href={`mailto:${profile.email}`} class="btn btn-primary">Email me <span class="arrow">→</span></a>
+        <a href="https://linkedin.com/in/ajuroshan" class="btn btn-ghost">LinkedIn</a>
+        <a href="https://github.com/ajuroshan" class="btn btn-ghost">GitHub</a>
+      </div>
+    </div>
+  </section>
 </Base>
 
 <style>
-  .name { font-size: 1.9em; line-height: 1.2; margin: 0.2em 0 0.5em; letter-spacing: -0.02em; }
-  .job { margin-bottom: 1.4em; }
-  .job-head { margin-bottom: 0.3em; }
-  .bullets { margin-bottom: 0.5em; }
-  .bullets li { padding-left: 2ch; text-indent: -2ch; }
-  .bullets li::before { content: '- '; color: var(--faint); }
-  .more { margin-top: 0.8em; }
-  .post-row { display: flex; gap: 2ch; }
-  .post-row time { flex: none; }
-  .units li { margin-bottom: 0.9em; }
-  .unit-head { display: flex; gap: 2ch; flex-wrap: wrap; }
-  .unit-metric { margin-left: auto; }
-  .unit-desc { margin: 0; padding-left: 2ch; color: var(--muted); }
-  .toml { margin: 0; font: inherit; white-space: pre-wrap; }
+  /* hero */
+  .hero { padding: clamp(56px, 9vw, 112px) 0 clamp(56px, 8vw, 96px); }
+  .hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: clamp(40px, 5vw, 72px); align-items: center; }
+  .status {
+    display: inline-flex; align-items: center; gap: 10px; margin-bottom: 28px;
+    font: 500 13px/1 var(--mono); color: var(--ink-2);
+    border: 1px solid var(--line); background: var(--surface); padding: 8px 14px 8px 12px; border-radius: 999px;
+  }
+  .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.5); animation: pulse 2.2s infinite; }
+  @keyframes pulse { 70% { box-shadow: 0 0 0 8px rgba(22, 163, 74, 0); } 100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); } }
+  h1 { font-size: clamp(40px, 5.6vw, 72px); line-height: 1.02; letter-spacing: -0.045em; font-weight: 600; }
+  h1 .serif, h2 .serif { font-size: 1.08em; letter-spacing: -0.02em; color: var(--accent); }
+  .lede { margin-top: 24px; font-size: clamp(17px, 1.5vw, 19px); color: var(--ink-2); max-width: 52ch; }
+  .ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 36px; }
+
+  /* impact */
+  .impact { border-top: 1px solid var(--line); }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); margin: 0; }
+  .stat { display: flex; flex-direction: column-reverse; gap: 8px; padding: 36px 24px 36px 0; }
+  .stat + .stat { border-left: 1px solid var(--line); padding-left: 24px; }
+  .stat dd { margin: 0; font-size: clamp(36px, 4.4vw, 56px); font-weight: 600; letter-spacing: -0.04em; line-height: 1; }
+  .stat dt { color: var(--muted); font-size: 14px; line-height: 1.45; max-width: 24ch; }
+
+  /* work */
+  .work { border-top: 1px solid var(--line); }
+  .work > li { border-bottom: 1px solid var(--line); }
+  .work-row {
+    display: grid; grid-template-columns: 56px 1fr 220px; gap: 24px; padding: 32px 0;
+    transition: background 0.2s ease, padding 0.2s ease;
+  }
+  .work-row:hover { background: var(--surface); padding-left: 16px; padding-right: 16px; }
+  .work-idx { color: var(--muted); font-size: 13px; padding-top: 6px; }
+  .work-main h3 { font-size: clamp(22px, 2.4vw, 28px); letter-spacing: -0.025em; margin-bottom: 10px; }
+  .work-row:hover h3 { color: var(--accent); }
+  .work-main p { color: var(--ink-2); max-width: 60ch; margin-bottom: 16px; }
+  .work-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; text-align: right; padding-top: 6px; }
+  .work-metric { font-weight: 600; font-size: 17px; letter-spacing: -0.01em; }
+  .work-host { font-size: 12px; }
+  .more { margin-top: 32px; font-weight: 500; }
+
+  /* about */
+  .split { display: grid; grid-template-columns: 1fr 1.35fr; gap: 48px 80px; }
+  .split :global(.section-head) { align-self: start; position: sticky; top: 104px; }
+  .about-lead { font-size: clamp(19px, 1.8vw, 22px); line-height: 1.55; letter-spacing: -0.01em; color: var(--ink); }
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 40px 0 56px; padding: 24px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .facts dt { font: 500 12px/1.4 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .facts dd { margin: 0; }
+  .sub-h { margin-bottom: 20px; }
+  .timeline > li { display: grid; grid-template-columns: 170px 1fr; gap: 24px; padding: 24px 0; border-top: 1px solid var(--line); }
+  .t-when { font-size: 13px; color: var(--muted); padding-top: 3px; }
+  .timeline h4 { font-size: 18px; letter-spacing: -0.015em; margin-bottom: 10px; font-weight: 600; }
+  .t-notes { margin-bottom: 14px; color: var(--ink-2); }
+  .t-notes li { position: relative; padding-left: 18px; margin-bottom: 6px; }
+  .t-notes li::before { content: ''; position: absolute; left: 0; top: 0.72em; width: 8px; height: 1px; background: var(--accent); }
+
+  /* capabilities */
+  .caps { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+  .cap { padding: 28px 24px 32px; }
+  .cap + .cap { border-left: 1px solid var(--line); }
+  .cap h3 { font-size: 19px; margin-bottom: 10px; }
+  .cap p { color: var(--ink-2); font-size: 15px; margin-bottom: 20px; }
+  .cap-tools { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
+  .cap-tools li::before { content: '— '; color: var(--line-strong); }
+
+  /* writing */
+  .posts { border-top: 1px solid var(--line); }
+  .posts > li { border-bottom: 1px solid var(--line); }
+  .post-row { display: grid; grid-template-columns: 160px 1fr 24px; gap: 24px; padding: 28px 0; align-items: baseline; }
+  .post-row time { font-size: 13px; }
+  .post-row h3 { font-size: 20px; letter-spacing: -0.02em; margin-bottom: 6px; }
+  .post-row:hover h3 { color: var(--accent); }
+  .post-row .arrow { transition: transform 0.15s ease; color: var(--muted); }
+  .post-row:hover .arrow { transform: translateX(4px); color: var(--accent); }
+
+  /* contact */
+  .contact { padding: clamp(80px, 12vw, 152px) 0; border-top: 1px solid var(--line); background: var(--surface); }
+  .contact-in { text-align: center; display: flex; flex-direction: column; align-items: center; }
+  .contact h2 { margin-top: 20px; font-size: clamp(34px, 5vw, 64px); letter-spacing: -0.045em; line-height: 1.05; max-width: 18ch; }
+  .contact-lede { margin-top: 20px; max-width: 48ch; }
+  .contact .ctas { justify-content: center; }
+
+  @media (max-width: 960px) {
+    .hero-grid { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .stat:nth-child(3) { border-left: 0; padding-left: 0; }
+    .stat:nth-child(n + 3) { border-top: 1px solid var(--line); }
+    .split { grid-template-columns: 1fr; }
+    .split :global(.section-head) { position: static; }
+    .caps { grid-template-columns: repeat(2, 1fr); }
+    .cap:nth-child(3) { border-left: 0; }
+    .cap:nth-child(n + 3) { border-top: 1px solid var(--line); }
+  }
+  @media (max-width: 640px) {
+    .work-row { grid-template-columns: 1fr; gap: 10px; padding: 28px 0; }
+    .work-row:hover { padding-left: 0; padding-right: 0; background: none; }
+    .work-side { align-items: flex-start; text-align: left; flex-direction: row; flex-wrap: wrap; gap: 12px; padding: 0; }
+    .work-idx { display: none; }
+    .timeline > li { grid-template-columns: 1fr; gap: 6px; }
+    .facts { grid-template-columns: 1fr; }
+    .caps { grid-template-columns: 1fr; }
+    .cap + .cap { border-left: 0; border-top: 1px solid var(--line); }
+    .post-row { grid-template-columns: 1fr; gap: 6px; }
+    .post-row .arrow { display: none; }
+  }
+  @media (max-width: 560px) { .hero-fig { display: none; } }
 </style>
