@@ -1,0 +1,42 @@
+---
+import Base from '../layouts/Base.astro';
+import Prompt from '../components/Prompt.astro';
+import { projects, type Project } from '../data/profile';
+
+const groups: { kind: Project['kind']; dir: string; note: string }[] = [
+  { kind: 'prod', dir: 'prod', note: 'in production, with real users' },
+  { kind: 'oss', dir: 'oss', note: 'open source' },
+  { kind: 'lab', dir: 'lab', note: 'experiments & infrastructure' },
+];
+---
+<Base title="projects" description="Production systems, open-source tools and experiments by Ajmal Roshan.">
+  <Prompt as="h1" path="~/projects" cmd="tree -L 1" />
+  <pre class="out tree">.
+{groups.map((g, gi) => (<>{gi < groups.length - 1 ? '├── ' : '└── '}<span class="b">{g.dir}/</span>  <span class="c"># {g.note}</span>{'\n'}</>))}</pre>
+
+  {groups.map((g) => (
+    <section>
+      <Prompt path={`~/projects/${g.dir}`} cmd="cat */README" id={g.dir} />
+      <div class="out">
+        {projects.filter((p) => p.kind === g.kind).map((p) => (
+          <article class="box proj">
+            <span class="box-title">{p.name}</span>
+            <p>{p.desc}</p>
+            <dl class="kv">
+              {p.metric && (<><dt>scale</dt><dd class="n">{p.metric}</dd></>)}
+              {p.url && (<><dt>live</dt><dd><a href={p.url}>{new URL(p.url).host}</a></dd></>)}
+              {p.repo && (<><dt>src</dt><dd><a href={p.repo}>{p.repo.replace('https://', '')}</a></dd></>)}
+              <dt>stack</dt><dd>{p.stack.join(' · ')}</dd>
+            </dl>
+          </article>
+        ))}
+      </div>
+    </section>
+  ))}
+</Base>
+
+<style>
+  .tree { margin: 0; font: inherit; }
+  .proj { margin: 1.6em 0; }
+  .proj p { margin-bottom: 0.6em; }
+</style>

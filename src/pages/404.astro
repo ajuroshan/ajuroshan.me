@@ -1,0 +1,12 @@
+---
+import Base from '../layouts/Base.astro';
+import Prompt from '../components/Prompt.astro';
+---
+<Base title="404">
+  <Prompt as="div" cmd={`cd ${Astro.url.pathname}`} />
+  <div class="out">
+    <h1 class="r">bash: cd: no such file or directory (404)</h1>
+    <p class="c" style="margin-top:1em"># try one of these</p>
+    <p><a href="/">cd ~</a> · <a href="/projects/">cd ~/projects</a> · <a href="/blog/">cd ~/blog</a></p>
+  </div>
+</Base>

@@ -1,0 +1,36 @@
+---
+import Base from '../../layouts/Base.astro';
+import Prompt from '../../components/Prompt.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+const words = (s = '') => s.split(/\s+/).filter(Boolean).length;
+---
+<Base title="blog" description="Notes on backend systems, infrastructure and the things I break along the way.">
+  <Prompt as="h1" path="~/blog" cmd="ls -lt" />
+  <div class="out">
+    <p class="c">total {posts.length} · <a href="/rss.xml">rss.xml</a></p>
+    <table class="ls">
+      <thead><tr><th>DATE</th><th class="hide-sm">MIN</th><th>TITLE</th></tr></thead>
+      <tbody>
+        {posts.map((p) => (
+          <tr>
+            <td class="n nowrap">{iso(p.data.date)}</td>
+            <td class="c hide-sm">{Math.max(1, Math.round(words(p.body) / 220))}</td>
+            <td>
+              <a href={`/blog/${p.id}/`}>{p.data.title}</a>
+              <div class="c desc">{p.data.description}</div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</Base>
+
+<style>
+  .desc { font-size: 0.93em; }
+  td { padding-bottom: 0.8em !important; }
+</style>

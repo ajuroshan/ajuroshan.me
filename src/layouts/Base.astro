@@ -1,0 +1,170 @@
+---
+import '../styles/global.css';
+import { profile } from '../data/profile';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+const { title, description = profile.summary } = Astro.props;
+const fullTitle = title ? `${title} · ${profile.name}` : `${profile.name} — ${profile.role}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+
+const windows = [
+  { n: 0, name: '~', href: '/' },
+  { n: 1, name: 'projects', href: '/projects/' },
+  { n: 2, name: 'blog', href: '/blog/' },
+];
+const here = Astro.url.pathname;
+const active = (href: string) => (href === '/' ? here === '/' : here.startsWith(href));
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate" type="application/rss+xml" title={`${profile.name} — blog`} href="/rss.xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta name="theme-color" content="#fbfbf9" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:type" content="website" />
+  </head>
+  <body>
+    <a class="skip" href="#main">skip to content</a>
+
+    <header class="topbar">
+      <div class="topbar-in">
+        <a href="/" class="brand"><span class="s">●</span> {profile.handle}<span class="dim">@</span>{profile.host.split('.')[1]}</a>
+        <span class="dim hide-sm">tty1 — {profile.location}</span>
+      </div>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="status" aria-label="site navigation">
+      <nav class="status-in">
+        <span class="sess">[{profile.handle}]</span>
+        {windows.map((w) => (
+          <a href={w.href} class:list={['win', { on: active(w.href) }]} aria-current={active(w.href) ? 'page' : undefined}>
+            {w.n}:{w.name}{active(w.href) ? '*' : ''}
+          </a>
+        ))}
+        <form class="cmdline" id="cmdline" autocomplete="off">
+          <label for="cmdin" class="dim">:</label>
+          <input id="cmdin" name="c" spellcheck="false" placeholder="help" aria-label="command" />
+        </form>
+        <span class="right hide-sm"><span id="clock">--:--</span> IST</span>
+      </nav>
+      <p id="cmdout" class="cmdout" role="status" aria-live="polite"></p>
+    </footer>
+
+    <script>
+      const routes: Record<string, string> = {
+        home: '/', '~': '/', cd: '/', projects: '/projects/', ls: '/projects/',
+        blog: '/blog/', posts: '/blog/', rss: '/rss.xml',
+        github: 'https://github.com/ajuroshan',
+        linkedin: 'https://linkedin.com/in/ajuroshan',
+        mail: 'mailto:ajuaju0483@gmail.com', email: 'mailto:ajuaju0483@gmail.com',
+      };
+      const form = document.getElementById('cmdline') as HTMLFormElement;
+      const input = document.getElementById('cmdin') as HTMLInputElement;
+      const out = document.getElementById('cmdout') as HTMLElement;
+      const say = (msg: string) => { out.textContent = msg; out.classList.toggle('show', !!msg); };
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const raw = input.value.trim().replace(/^[:/]/, '');
+        const [cmd, arg] = raw.split(/\s+/);
+        input.value = '';
+        if (!cmd) return say('');
+        if (cmd === 'help' || cmd === 'h') {
+          return say('home · projects · blog · github · linkedin · mail · rss · top · clear   [ keys: g h / g p / g b, : to focus ]');
+        }
+        if (cmd === 'clear') { input.blur(); return say(''); }
+        if (cmd === 'top') { window.scrollTo({ top: 0 }); return say(''); }
+        if (cmd === 'cd' && arg) {
+          const t = routes[arg.replace(/\/$/, '')];
+          if (t) { location.href = t; return; }
+        }
+        if (cmd === 'sudo') return say('ajmal is not in the sudoers file. This incident will be reported.');
+        const t = routes[cmd];
+        if (t) { location.href = t; return; }
+        say(`zsh: command not found: ${cmd}  — try "help"`);
+      });
+
+      let pendingG = false;
+      document.addEventListener('keydown', (e) => {
+        const tgt = e.target as HTMLElement;
+        if (tgt.matches('input, textarea') || e.metaKey || e.ctrlKey || e.altKey) {
+          if (e.key === 'Escape') { input.blur(); say(''); }
+          return;
+        }
+        if (e.key === ':' ) { e.preventDefault(); input.focus(); return; }
+        if (pendingG) {
+          pendingG = false;
+          const map: Record<string, string> = { h: '/', p: '/projects/', b: '/blog/' };
+          if (map[e.key]) location.href = map[e.key];
+          return;
+        }
+        if (e.key === 'g') { pendingG = true; setTimeout(() => (pendingG = false), 800); }
+      });
+
+      const clock = document.getElementById('clock');
+      const tick = () => {
+        if (clock) clock.textContent = new Intl.DateTimeFormat('en-GB', {
+          timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit',
+        }).format(new Date());
+      };
+      tick(); setInterval(tick, 30_000);
+    </script>
+
+    <style>
+      .skip { position: absolute; left: -999px; }
+      .skip:focus { left: 1rem; top: 1rem; background: var(--fg); color: var(--bg); padding: 0 1ch; z-index: 10; }
+
+      .topbar { border-bottom: 1px solid var(--rule); }
+      .topbar-in {
+        max-width: var(--col); margin: 0 auto; padding: 0.6rem 1rem;
+        display: flex; justify-content: space-between; gap: 2ch;
+      }
+      .brand { color: var(--fg); font-weight: 700; }
+      .brand:hover { text-decoration: none; }
+
+      .status {
+        position: sticky; bottom: 0;
+        background: var(--fg); color: var(--bg);
+        font-size: 0.93em;
+      }
+      .status-in {
+        max-width: var(--col); margin: 0 auto; padding: 0.2rem 1rem;
+        display: flex; align-items: center; gap: 1.5ch; white-space: nowrap;
+      }
+      .sess { color: #7ee2a8; font-weight: 700; }
+      .win { color: var(--bg); padding: 0 0.5ch; }
+      .win.on { background: var(--bg); color: var(--fg); font-weight: 700; }
+      .win:hover { text-decoration: none; background: #3a3a3a; }
+      .win.on:hover { background: var(--bg); }
+      .cmdline { display: flex; align-items: center; flex: 1; min-width: 6ch; margin-left: 1ch; }
+      .cmdline .dim { color: #888; }
+      .cmdline input {
+        flex: 1; min-width: 0; background: transparent; border: 0; color: var(--bg);
+        font: inherit; padding: 0 0 0 0.5ch; outline: none;
+      }
+      .cmdline input::placeholder { color: #666; }
+      .right { color: #bbb; }
+      .cmdout {
+        display: none; margin: 0; max-width: var(--col); margin: 0 auto;
+        padding: 0.2rem 1rem; color: #ddd; white-space: pre-wrap; border-top: 1px solid #333;
+      }
+      .cmdout.show { display: block; }
+    </style>
+  </body>
+</html>

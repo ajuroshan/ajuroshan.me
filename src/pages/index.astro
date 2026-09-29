@@ -1,0 +1,103 @@
+---
+import Base from '../layouts/Base.astro';
+import Prompt from '../components/Prompt.astro';
+import { getCollection } from 'astro:content';
+import { profile, experience, projects, stack } from '../data/profile';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 5);
+const featured = projects.filter((p) => p.kind === 'prod');
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+const host = (u: string) => new URL(u).host;
+---
+<Base>
+  <Prompt as="div" cmd="whoami" />
+  <div class="out">
+    <h1 class="name">{profile.name}</h1>
+    <p><span class="c"># </span>{profile.role}. {profile.summary}</p>
+    <dl class="kv">
+      <dt>location</dt><dd>{profile.location}</dd>
+      <dt>education</dt><dd>{profile.education}</dd>
+      <dt>focus</dt><dd>Django/DRF services · Linux + Docker ops · iOS</dd>
+      <dt>links</dt>
+      <dd>{profile.links.map((l, i) => (<>{i > 0 && <span class="dim"> · </span>}<a href={l.href}>{l.label}</a></>))}</dd>
+    </dl>
+  </div>
+
+  <Prompt cmd="cat ~/experience.log" id="experience" />
+  <div class="out">
+    {experience.map((e) => (
+      <div class="job">
+        <p class="job-head">
+          <span class="n">[{e.from} → {e.to}]</span> <strong>{e.role}</strong> <span class="c">@</span> {e.org}
+        </p>
+        <ul class="bullets">
+          {e.notes.map((n) => <li>{n}</li>)}
+        </ul>
+        <div>{e.stack.map((s) => <span class="tag">{s}</span>)}</div>
+      </div>
+    ))}
+  </div>
+
+  <Prompt cmd="systemctl list-units --type=service --state=running" id="projects" />
+  <div class="out">
+    <p class="c"># production systems I built and run</p>
+    <table class="ls">
+      <thead><tr><th>UNIT</th><th class="hide-sm">LOAD</th><th>DESCRIPTION</th></tr></thead>
+      <tbody>
+        {featured.map((p) => (
+          <tr>
+            <td class="nowrap"><span class="s">●</span> {p.url ? <a href={p.url}>{p.name}.service</a> : `${p.name}.service`}</td>
+            <td class="n nowrap hide-sm">{p.metric}</td>
+            <td>{p.desc}{p.url && <span class="c"> — {host(p.url)}</span>}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+    <p class="more"><span class="c">{featured.length} loaded units listed.</span> <a href="/projects/">ls ~/projects →</a></p>
+  </div>
+
+  <Prompt cmd="ls -lt ~/blog | head -5" id="blog" />
+  <div class="out">
+    {posts.length === 0 ? (
+      <p class="c">total 0</p>
+    ) : (
+      <ul>
+        {posts.map((p) => (
+          <li class="post-row">
+            <time class="n" datetime={p.data.date.toISOString()}>{iso(p.data.date)}</time>
+            <a href={`/blog/${p.id}/`}>{p.data.title}</a>
+          </li>
+        ))}
+      </ul>
+    )}
+    <p class="more"><a href="/blog/">cd ~/blog →</a></p>
+  </div>
+
+  <Prompt cmd="cat ~/.stack.toml" id="stack" />
+  <div class="out">
+    <pre class="toml">{Object.entries(stack).map(([k, v]) => (
+<><span class="k">[{k}]</span>{'\n'}<span>tools</span> = [{v.map((t, i) => <><span class="s">"{t}"</span>{i < v.length - 1 ? ', ' : ''}</>)}]{'\n\n'}</>))}</pre>
+  </div>
+
+  <Prompt cmd="echo $CONTACT" id="contact" />
+  <div class="out">
+    <p>Open to backend, platform and DevOps work. Fastest reply: <a href="mailto:ajuaju0483@gmail.com">ajuaju0483@gmail.com</a></p>
+  </div>
+
+  <div class="cmd"><span class="ps1">ajmal@ajuroshan</span><span class="dim">:</span><span class="path">~</span><span class="dim">$ </span><span class="cursor" aria-hidden="true"></span></div>
+</Base>
+
+<style>
+  .name { font-size: 1.9em; line-height: 1.2; margin: 0.2em 0 0.5em; letter-spacing: -0.02em; }
+  .job { margin-bottom: 1.4em; }
+  .job-head { margin-bottom: 0.3em; }
+  .bullets { margin-bottom: 0.5em; }
+  .bullets li { padding-left: 2ch; text-indent: -2ch; }
+  .bullets li::before { content: '- '; color: var(--faint); }
+  .more { margin-top: 0.8em; }
+  .post-row { display: flex; gap: 2ch; }
+  .post-row time { flex: none; }
+  .toml { margin: 0; font: inherit; white-space: pre-wrap; }
+</style>

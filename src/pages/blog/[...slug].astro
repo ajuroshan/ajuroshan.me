@@ -1,0 +1,69 @@
+---
+import Base from '../../layouts/Base.astro';
+import Prompt from '../../components/Prompt.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content, headings } = await render(post);
+const iso = post.data.date.toISOString().slice(0, 10);
+const toc = headings.filter((h) => h.depth === 2);
+---
+<Base title={post.data.title} description={post.data.description}>
+  <Prompt as="div" path="~/blog" cmd={`less ${post.id}.md`} />
+  <article class="out">
+    <header class="meta">
+      <pre class="fm"><span class="dim">---</span>
+<span class="k">title</span>: <span class="s">"{post.data.title}"</span>
+<span class="k">date</span>:  <span class="n">{iso}</span>
+{post.data.tags.length > 0 && <><span class="k">tags</span>:  [{post.data.tags.join(', ')}]{'\n'}</>}<span class="dim">---</span></pre>
+      <h1 class="title">{post.data.title}</h1>
+    </header>
+
+    {toc.length > 2 && (
+      <nav class="toc" aria-label="contents">
+        <span class="c"># contents</span>
+        <ol>{toc.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}</ol>
+      </nav>
+    )}
+
+    <div class="prose"><Content /></div>
+
+    <p class="end c">(END) — <a href="/blog/">q</a> to quit</p>
+  </article>
+</Base>
+
+<style>
+  .fm { margin: 0 0 1.2em; font: inherit; color: var(--muted); }
+  .title { font-size: 1.6em; line-height: 1.25; letter-spacing: -0.02em; margin-bottom: 1.2em; }
+  .toc { border-left: 2px solid var(--rule); padding-left: 2ch; margin-bottom: 2em; }
+  .toc ol { margin: 0.3em 0 0; padding-left: 3ch; }
+  .end { margin-top: 3em; }
+
+  .prose { max-width: 76ch; }
+  .prose :global(h2) { margin: 2.2em 0 0.6em; }
+  .prose :global(h2)::before { content: '## '; color: var(--faint); }
+  .prose :global(h3) { margin: 1.8em 0 0.5em; }
+  .prose :global(h3)::before { content: '### '; color: var(--faint); }
+  .prose :global(ul), .prose :global(ol) { margin: 0 0 1em; padding-left: 3ch; }
+  .prose :global(ul) { list-style: none; }
+  .prose :global(ul > li)::before { content: '- '; color: var(--faint); margin-left: -2ch; }
+  .prose :global(li) { margin-bottom: 0.3em; }
+  .prose :global(blockquote) {
+    margin: 0 0 1em; padding-left: 2ch; border-left: 2px solid var(--fg); color: var(--muted);
+  }
+  .prose :global(code) { background: var(--bg-alt); padding: 0.05em 0.4ch; font-size: 0.95em; }
+  .prose :global(pre) {
+    background: #f6f8fa !important; border: 1px solid var(--rule);
+    padding: 1em 2ch; overflow-x: auto; margin: 0 0 1.2em; font-size: 0.93em; line-height: 1.5;
+  }
+  .prose :global(pre code) { background: none; padding: 0; }
+  .prose :global(img) { max-width: 100%; border: 1px solid var(--rule); }
+  .prose :global(hr) { margin: 2em 0; }
+  .prose :global(table) { border-collapse: collapse; margin-bottom: 1em; }
+  .prose :global(th), .prose :global(td) { border: 1px solid var(--rule); padding: 0.2em 1ch; }
+</style>
