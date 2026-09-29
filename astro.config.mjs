@@ -6,6 +6,6 @@ export default defineConfig({
   site: 'https://www.ajuroshan.me',
   integrations: [sitemap()],
   markdown: {
-    shikiConfig: { themes: { light: 'github-light', dark: 'github-dark-dimmed' } },
+    shikiConfig: { theme: 'github-light' },
   },
 });

@@ -9,9 +9,9 @@ This site is deliberately boring infrastructure: static HTML, one small VM, one 
 
 ## Stack
 
-- **[Astro](https://astro.build)**: renders every page to plain HTML at build time. The site ships no client-side JavaScript at all; even the architecture diagram on the home page is animated with SVG.
+- **[Astro](https://astro.build)**: renders every page to plain HTML at build time. The site ships no client-side JavaScript at all; the figure on the home page is plain inline SVG.
 - **Markdown content collections**: every post is a `.md` file with a typed frontmatter schema, so a missing date fails the build rather than the page.
-- **Geist** and **Instrument Serif**, self-hosted. No third-party requests.
+- **Libertinus Serif** and **IBM Plex Mono**, self-hosted. No third-party requests.
 - **nginx** on an Oracle Cloud *Always Free* `VM.Standard.E2.1.Micro` with 1 GB of RAM.
 
 ## Deploys

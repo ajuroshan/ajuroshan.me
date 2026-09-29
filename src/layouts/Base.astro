@@ -17,14 +17,15 @@ const version = process.env.SITE_VERSION ?? `v${pkg.version}`;
 let sha = 'dev';
 try { sha = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch {}
 const repo = 'https://github.com/ajuroshan/ajuroshan.me';
+const built = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
 const nav = [
-  { label: 'Work', href: '/projects/' },
-  { label: 'Writing', href: '/blog/' },
-  { label: 'About', href: '/#about' },
+  { label: 'Paper', href: '/' },
+  { label: 'Projects', href: '/projects/' },
+  { label: 'Notes', href: '/blog/' },
 ];
 const here = Astro.url.pathname;
-const year = new Date().getFullYear();
+const isOn = (href: string) => (href === '/' ? here === '/' : here.startsWith(href));
 ---
 <!doctype html>
 <html lang="en">
@@ -35,95 +36,73 @@ const year = new Date().getFullYear();
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="alternate" type="application/rss+xml" title={`${profile.name} — writing`} href="/rss.xml" />
+    <link rel="alternate" type="application/rss+xml" title={`${profile.name} — notes`} href="/rss.xml" />
     <link rel="sitemap" href="/sitemap-index.xml" />
-    <meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0b0b0c" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#e8e5de" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:type" content="website" />
   </head>
   <body>
-    <a class="skip" href="#main">Skip to content</a>
+    <div class="sheet">
+      <a class="stamp no-print" href={`${repo}/releases/tag/${version}`} title={`build ${sha}`}>
+        {profile.handle}.me:{version} [cs.DC] {built}
+      </a>
 
-    <header class="site-header">
-      <div class="wrap bar">
-        <a href="/" class="mark" aria-label={`${profile.name}, home`}>
-          <span class="mark-glyph" aria-hidden="true">AR</span>
-          <span class="mark-name">{profile.name}</span>
-        </a>
-        <nav aria-label="primary">
-          {nav.map((n) => (
-            <a href={n.href} class:list={['nav-link', { on: n.href !== '/#about' && here.startsWith(n.href) }]}>{n.label}</a>
+      <header class="runhead">
+        <a href="/" class="sc rh-name">A. Roshan</a>
+        <nav class="sc no-print" aria-label="primary">
+          {nav.map((n, i) => (
+            <>{i > 0 && <span class="sep" aria-hidden="true">·</span>}<a href={n.href} aria-current={isOn(n.href) ? 'page' : undefined}>{n.label}</a></>
           ))}
-          <a href={`mailto:${profile.email}`} class="nav-cta">Contact</a>
         </nav>
-      </div>
-    </header>
+      </header>
 
-    <main id="main">
-      <slot />
-    </main>
+      <main id="main">
+        <slot />
+      </main>
 
-    <footer class="site-footer">
-      <div class="wrap foot">
-        <div class="foot-id">
-          <p class="foot-name">{profile.name}</p>
-          <p class="muted">{profile.role} · {profile.location}</p>
-        </div>
-        <ul class="foot-links">
-          {profile.links.map((l) => <li><a href={l.href} class="link">{l.label}</a></li>)}
-        </ul>
-        <div class="foot-meta mono">
-          <p>© {year} · Built with Astro, self-hosted on Oracle Cloud</p>
-          <p><a href={`${repo}/releases/tag/${version}`} class="ver" title={`build ${sha}`}>{version}</a> · <a href={repo}>source</a></p>
-        </div>
-      </div>
-    </footer>
+      <footer class="colophon">
+        <p class="folio" aria-hidden="true">{here === '/' ? '1' : '2'}</p>
+        <p class="sc muted small">
+          Set in Libertinus · built with Astro · served from Oracle Cloud ·{' '}
+          <a href={repo}>source</a>{' · '}<a href={`${repo}/releases/tag/${version}`}>{version}</a>
+        </p>
+      </footer>
+    </div>
 
     <style>
-      .skip { position: absolute; left: -9999px; }
-      .skip:focus { left: 16px; top: 16px; z-index: 50; background: var(--ink); color: var(--bg); padding: 8px 12px; border-radius: 6px; }
+      .stamp {
+        position: absolute; left: 30px; top: 50%;
+        transform: translateY(-50%) rotate(180deg);
+        writing-mode: vertical-rl;
+        font: 400 22px/1 var(--serif);
+        color: #bdb8ad; letter-spacing: 0.01em; white-space: nowrap;
+        max-height: 90%; overflow: hidden;
+      }
+      .stamp:hover { color: var(--muted); text-decoration: none; }
 
-      .site-header {
-        position: sticky; top: 0; z-index: 20;
-        background: color-mix(in srgb, var(--bg) 88%, transparent);
-        backdrop-filter: saturate(1.4) blur(10px);
-        -webkit-backdrop-filter: saturate(1.4) blur(10px);
-        border-bottom: 1px solid var(--line);
+      .runhead {
+        display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+        padding-bottom: 6px; border-bottom: 0.75px solid var(--rule); margin-bottom: 48px;
+        font-size: 0.95em;
       }
-      .bar { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
-      .mark { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -0.01em; }
-      .mark-glyph {
-        display: grid; place-items: center; width: 30px; height: 30px; border-radius: 7px;
-        background: var(--ink); color: var(--bg); font: 600 12px/1 var(--mono); letter-spacing: 0;
-      }
-      nav { display: flex; align-items: center; gap: 4px; }
-      .nav-link { padding: 8px 12px; border-radius: 999px; color: var(--ink-2); font-size: 15px; }
-      .nav-link:hover, .nav-link.on { color: var(--ink); background: var(--line); }
-      .nav-cta {
-        margin-left: 8px; padding: 8px 16px; border-radius: 999px; font-size: 15px; font-weight: 500;
-        background: var(--ink); color: var(--bg);
-      }
-      .nav-cta:hover { background: var(--accent); color: #fff; }
+      .rh-name { color: var(--ink); }
+      .runhead nav { display: flex; gap: 10px; }
+      .runhead nav a { color: var(--ink-2); }
+      .runhead nav a[aria-current='page'] { color: var(--ink); font-weight: 700; }
+      .sep { color: var(--muted); }
 
-      .site-footer { border-top: 1px solid var(--line); padding: 56px 0 40px; }
-      .foot { display: grid; grid-template-columns: 1.4fr 1fr; gap: 32px 48px; }
-      .foot-name { font-weight: 600; font-size: 18px; letter-spacing: -0.01em; }
-      .foot-links { display: flex; flex-wrap: wrap; gap: 12px 24px; justify-self: end; align-self: start; }
-      .foot-meta {
-        grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
-        padding-top: 24px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted);
-      }
-      .foot-meta a:hover { color: var(--accent); }
+      .colophon { margin-top: 64px; text-align: center; }
+      .folio { font-size: 0.95em; margin-bottom: 18px; }
+      .small { font-size: 0.8em; line-height: 1.6; }
+      .colophon a { color: var(--muted); }
+      .colophon a:hover { color: var(--ink); }
 
-      @media (max-width: 720px) {
-        .mark-name { display: none; }
-        .nav-link { padding: 8px 9px; font-size: 14px; }
-        .nav-cta { margin-left: 4px; padding: 8px 12px; font-size: 14px; }
-        .foot { grid-template-columns: 1fr; }
-        .foot-links { justify-self: start; }
+      @media (max-width: 900px) {
+        .stamp { display: none; }
+        .runhead { margin-bottom: 32px; }
       }
     </style>
   </body>
