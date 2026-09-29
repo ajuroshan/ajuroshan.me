@@ -59,7 +59,7 @@ main {
 
 /* ---------- terminal primitives ---------- */
 .cmd { margin: 2.2em 0 0.6em; color: var(--fg); white-space: pre-wrap; }
-.cmd:first-child { margin-top: 0; }
+main > .cmd:first-child { margin-top: 0; }
 .cmd .ps1 { color: var(--green); user-select: none; }
 .cmd .path { color: var(--blue); user-select: none; }
 .cmd .arg { color: var(--amber); }
@@ -112,6 +112,7 @@ main {
 .kv { display: grid; grid-template-columns: max-content 1fr; column-gap: 3ch; row-gap: 0.15em; }
 .kv dt { color: var(--muted); }
 .kv dd { margin: 0; }
+.box > :last-child { margin-bottom: 0; }
 
 /* tables */
 table.ls { width: 100%; border-collapse: collapse; }

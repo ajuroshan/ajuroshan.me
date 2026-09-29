@@ -43,18 +43,18 @@ const host = (u: string) => new URL(u).host;
   <Prompt cmd="systemctl list-units --type=service --state=running" id="projects" />
   <div class="out">
     <p class="c"># production systems I built and run</p>
-    <table class="ls">
-      <thead><tr><th>UNIT</th><th class="hide-sm">LOAD</th><th>DESCRIPTION</th></tr></thead>
-      <tbody>
-        {featured.map((p) => (
-          <tr>
-            <td class="nowrap"><span class="s">●</span> {p.url ? <a href={p.url}>{p.name}.service</a> : `${p.name}.service`}</td>
-            <td class="n nowrap hide-sm">{p.metric}</td>
-            <td>{p.desc}{p.url && <span class="c"> — {host(p.url)}</span>}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <ul class="units">
+      {featured.map((p) => (
+        <li>
+          <div class="unit-head">
+            <span><span class="s">●</span> {p.url ? <a href={p.url}>{p.name}.service</a> : `${p.name}.service`}</span>
+            <span class="c hide-sm">active (running)</span>
+            <span class="n unit-metric">{p.metric}</span>
+          </div>
+          <p class="unit-desc">{p.desc}{p.url && <span class="c"> — {host(p.url)}</span>}</p>
+        </li>
+      ))}
+    </ul>
     <p class="more"><span class="c">{featured.length} loaded units listed.</span> <a href="/projects/">ls ~/projects →</a></p>
   </div>
 
@@ -99,5 +99,9 @@ const host = (u: string) => new URL(u).host;
   .more { margin-top: 0.8em; }
   .post-row { display: flex; gap: 2ch; }
   .post-row time { flex: none; }
+  .units li { margin-bottom: 0.9em; }
+  .unit-head { display: flex; gap: 2ch; flex-wrap: wrap; }
+  .unit-metric { margin-left: auto; }
+  .unit-desc { margin: 0; padding-left: 2ch; color: var(--muted); }
   .toml { margin: 0; font: inherit; white-space: pre-wrap; }
 </style>
