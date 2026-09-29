@@ -4,27 +4,27 @@ import { execSync } from 'node:child_process';
 import pkg from '../../package.json';
 import { profile } from '../data/profile';
 
+interface Props {
+  title?: string;
+  description?: string;
+}
+const { title, description = profile.summary } = Astro.props;
+const fullTitle = title ? `${title} — ${profile.name}` : `${profile.name} — ${profile.role}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+
 // Release CI sets SITE_VERSION to the tag; local builds fall back to package.json.
 const version = process.env.SITE_VERSION ?? `v${pkg.version}`;
 let sha = 'dev';
 try { sha = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch {}
 const repo = 'https://github.com/ajuroshan/ajuroshan.me';
 
-interface Props {
-  title?: string;
-  description?: string;
-}
-const { title, description = profile.summary } = Astro.props;
-const fullTitle = title ? `${title} · ${profile.name}` : `${profile.name} — ${profile.role}`;
-const canonical = new URL(Astro.url.pathname, Astro.site);
-
-const windows = [
-  { n: 0, name: '~', href: '/' },
-  { n: 1, name: 'projects', href: '/projects/' },
-  { n: 2, name: 'blog', href: '/blog/' },
+const nav = [
+  { label: 'Work', href: '/projects/' },
+  { label: 'Writing', href: '/blog/' },
+  { label: 'About', href: '/#about' },
 ];
 const here = Astro.url.pathname;
-const active = (href: string) => (href === '/' ? here === '/' : here.startsWith(href));
+const year = new Date().getFullYear();
 ---
 <!doctype html>
 <html lang="en">
@@ -35,21 +35,30 @@ const active = (href: string) => (href === '/' ? here === '/' : here.startsWith(
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="alternate" type="application/rss+xml" title={`${profile.name} — blog`} href="/rss.xml" />
+    <link rel="alternate" type="application/rss+xml" title={`${profile.name} — writing`} href="/rss.xml" />
     <link rel="sitemap" href="/sitemap-index.xml" />
-    <meta name="theme-color" content="#fbfbf9" />
+    <meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0b0c" media="(prefers-color-scheme: dark)" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:type" content="website" />
   </head>
   <body>
-    <a class="skip" href="#main">skip to content</a>
+    <a class="skip" href="#main">Skip to content</a>
 
-    <header class="topbar">
-      <div class="topbar-in">
-        <a href="/" class="brand"><span class="s">●</span> {profile.handle}<span class="dim">.</span>{profile.host.split('.')[1]}</a>
-        <span class="dim hide-sm">tty1 — {profile.location}</span>
+    <header class="site-header">
+      <div class="wrap bar">
+        <a href="/" class="mark" aria-label={`${profile.name}, home`}>
+          <span class="mark-glyph" aria-hidden="true">AR</span>
+          <span class="mark-name">{profile.name}</span>
+        </a>
+        <nav aria-label="primary">
+          {nav.map((n) => (
+            <a href={n.href} class:list={['nav-link', { on: n.href !== '/#about' && here.startsWith(n.href) }]}>{n.label}</a>
+          ))}
+          <a href={`mailto:${profile.email}`} class="nav-cta">Contact</a>
+        </nav>
       </div>
     </header>
 
@@ -57,127 +66,65 @@ const active = (href: string) => (href === '/' ? here === '/' : here.startsWith(
       <slot />
     </main>
 
-    <footer class="status" aria-label="site navigation">
-      <nav class="status-in">
-        <span class="sess">[{profile.handle}]</span>
-        {windows.map((w) => (
-          <a href={w.href} class:list={['win', { on: active(w.href) }]} aria-current={active(w.href) ? 'page' : undefined}>
-            {w.n}:{w.name}{active(w.href) ? '*' : ''}
-          </a>
-        ))}
-        <form class="cmdline" id="cmdline" autocomplete="off">
-          <label for="cmdin" class="dim">:</label>
-          <input id="cmdin" name="c" spellcheck="false" placeholder="help" aria-label="command" />
-        </form>
-        <span class="right hide-sm">
-          <a class="ver" href={`${repo}/releases/tag/${version}`} title={`build ${sha}`}>{version}</a>
-          <span class="dim"> │ </span><span id="clock">--:--</span> IST
-        </span>
-      </nav>
-      <p id="cmdout" class="cmdout" role="status" aria-live="polite"></p>
+    <footer class="site-footer">
+      <div class="wrap foot">
+        <div class="foot-id">
+          <p class="foot-name">{profile.name}</p>
+          <p class="muted">{profile.role} · {profile.location}</p>
+        </div>
+        <ul class="foot-links">
+          {profile.links.map((l) => <li><a href={l.href} class="link">{l.label}</a></li>)}
+        </ul>
+        <div class="foot-meta mono">
+          <p>© {year} · Built with Astro, self-hosted on Oracle Cloud</p>
+          <p><a href={`${repo}/releases/tag/${version}`} class="ver" title={`build ${sha}`}>{version}</a> · <a href={repo}>source</a></p>
+        </div>
+      </div>
     </footer>
 
-    <script>
-      const routes: Record<string, string> = {
-        home: '/', '~': '/', cd: '/', projects: '/projects/', ls: '/projects/',
-        blog: '/blog/', posts: '/blog/', rss: '/rss.xml',
-        github: 'https://github.com/ajuroshan',
-        linkedin: 'https://linkedin.com/in/ajuroshan',
-        mail: 'mailto:ajuaju0483@gmail.com', email: 'mailto:ajuaju0483@gmail.com',
-      };
-      const form = document.getElementById('cmdline') as HTMLFormElement;
-      const input = document.getElementById('cmdin') as HTMLInputElement;
-      const out = document.getElementById('cmdout') as HTMLElement;
-      const say = (msg: string) => { out.textContent = msg; out.classList.toggle('show', !!msg); };
-
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const raw = input.value.trim().replace(/^[:/]/, '');
-        const [cmd, arg] = raw.split(/\s+/);
-        input.value = '';
-        if (!cmd) return say('');
-        if (cmd === 'help' || cmd === 'h') {
-          return say('home · projects · blog · github · linkedin · mail · rss · top · clear   [ keys: g h / g p / g b, : to focus ]');
-        }
-        if (cmd === 'clear') { input.blur(); return say(''); }
-        if (cmd === 'top') { window.scrollTo({ top: 0 }); return say(''); }
-        if (cmd === 'cd' && arg) {
-          const t = routes[arg.replace(/\/$/, '')];
-          if (t) { location.href = t; return; }
-        }
-        if (cmd === 'sudo') return say('ajmal is not in the sudoers file. This incident will be reported.');
-        const t = routes[cmd];
-        if (t) { location.href = t; return; }
-        say(`zsh: command not found: ${cmd}  — try "help"`);
-      });
-
-      let pendingG = false;
-      document.addEventListener('keydown', (e) => {
-        const tgt = e.target as HTMLElement;
-        if (tgt.matches('input, textarea') || e.metaKey || e.ctrlKey || e.altKey) {
-          if (e.key === 'Escape') { input.blur(); say(''); }
-          return;
-        }
-        if (e.key === ':' ) { e.preventDefault(); input.focus(); return; }
-        if (pendingG) {
-          pendingG = false;
-          const map: Record<string, string> = { h: '/', p: '/projects/', b: '/blog/' };
-          if (map[e.key]) location.href = map[e.key];
-          return;
-        }
-        if (e.key === 'q' && location.pathname.startsWith('/blog/') && location.pathname !== '/blog/') { location.href = '/blog/'; return; }
-        if (e.key === 'g') { pendingG = true; setTimeout(() => (pendingG = false), 800); }
-      });
-
-      const clock = document.getElementById('clock');
-      const tick = () => {
-        if (clock) clock.textContent = new Intl.DateTimeFormat('en-GB', {
-          timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit',
-        }).format(new Date());
-      };
-      tick(); setInterval(tick, 30_000);
-    </script>
-
     <style>
-      .skip { position: absolute; left: -999px; }
-      .skip:focus { left: 1rem; top: 1rem; background: var(--fg); color: var(--bg); padding: 0 1ch; z-index: 10; }
+      .skip { position: absolute; left: -9999px; }
+      .skip:focus { left: 16px; top: 16px; z-index: 50; background: var(--ink); color: var(--bg); padding: 8px 12px; border-radius: 6px; }
 
-      .topbar { border-bottom: 1px solid var(--rule); }
-      .topbar-in {
-        max-width: var(--col); margin: 0 auto; padding: 0.6rem 1rem;
-        display: flex; justify-content: space-between; gap: 2ch;
+      .site-header {
+        position: sticky; top: 0; z-index: 20;
+        background: color-mix(in srgb, var(--bg) 88%, transparent);
+        backdrop-filter: saturate(1.4) blur(10px);
+        -webkit-backdrop-filter: saturate(1.4) blur(10px);
+        border-bottom: 1px solid var(--line);
       }
-      .brand { color: var(--fg); font-weight: 700; }
-      .brand:hover { text-decoration: none; }
+      .bar { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
+      .mark { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -0.01em; }
+      .mark-glyph {
+        display: grid; place-items: center; width: 30px; height: 30px; border-radius: 7px;
+        background: var(--ink); color: var(--bg); font: 600 12px/1 var(--mono); letter-spacing: 0;
+      }
+      nav { display: flex; align-items: center; gap: 4px; }
+      .nav-link { padding: 8px 12px; border-radius: 999px; color: var(--ink-2); font-size: 15px; }
+      .nav-link:hover, .nav-link.on { color: var(--ink); background: var(--line); }
+      .nav-cta {
+        margin-left: 8px; padding: 8px 16px; border-radius: 999px; font-size: 15px; font-weight: 500;
+        background: var(--ink); color: var(--bg);
+      }
+      .nav-cta:hover { background: var(--accent); color: #fff; }
 
-      .status {
-        position: sticky; bottom: 0;
-        background: var(--fg); color: var(--bg);
-        font-size: 0.93em;
+      .site-footer { border-top: 1px solid var(--line); padding: 56px 0 40px; }
+      .foot { display: grid; grid-template-columns: 1.4fr 1fr; gap: 32px 48px; }
+      .foot-name { font-weight: 600; font-size: 18px; letter-spacing: -0.01em; }
+      .foot-links { display: flex; flex-wrap: wrap; gap: 12px 24px; justify-self: end; align-self: start; }
+      .foot-meta {
+        grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+        padding-top: 24px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted);
       }
-      .status-in {
-        max-width: var(--col); margin: 0 auto; padding: 0.2rem 1rem;
-        display: flex; align-items: center; gap: 1.5ch; white-space: nowrap;
+      .foot-meta a:hover { color: var(--accent); }
+
+      @media (max-width: 720px) {
+        .mark-name { display: none; }
+        .nav-link { padding: 8px 9px; font-size: 14px; }
+        .nav-cta { margin-left: 4px; padding: 8px 12px; font-size: 14px; }
+        .foot { grid-template-columns: 1fr; }
+        .foot-links { justify-self: start; }
       }
-      .sess { color: #7ee2a8; font-weight: 700; }
-      .win { color: var(--bg); padding: 0 0.5ch; }
-      .win.on { background: var(--bg); color: var(--fg); font-weight: 700; }
-      .win:hover { text-decoration: none; background: #3a3a3a; }
-      .win.on:hover { background: var(--bg); }
-      .cmdline { display: flex; align-items: center; flex: 1; min-width: 6ch; margin-left: 1ch; }
-      .cmdline .dim { color: #888; }
-      .cmdline input {
-        flex: 1; min-width: 0; background: transparent; border: 0; color: var(--bg);
-        font: inherit; padding: 0 0 0 0.5ch; outline: none;
-      }
-      .cmdline input::placeholder { color: #666; }
-      .right { color: #bbb; }
-      .ver { color: #7ee2a8; }
-      .cmdout {
-        display: none; margin: 0; max-width: var(--col); margin: 0 auto;
-        padding: 0.2rem 1rem; color: #ddd; white-space: pre-wrap; border-top: 1px solid #333;
-      }
-      .cmdout.show { display: block; }
     </style>
   </body>
 </html>

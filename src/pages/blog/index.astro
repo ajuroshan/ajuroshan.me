@@ -1,36 +1,58 @@
 ---
 import Base from '../../layouts/Base.astro';
-import Prompt from '../../components/Prompt.astro';
 import { getCollection } from 'astro:content';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
-const iso = (d: Date) => d.toISOString().slice(0, 10);
-const words = (s = '') => s.split(/\s+/).filter(Boolean).length;
+const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+const mins = (s = '') => Math.max(1, Math.round(s.split(/\s+/).filter(Boolean).length / 220));
 ---
-<Base title="blog" description="Notes on backend systems, infrastructure and the things I break along the way.">
-  <Prompt as="h1" path="~/blog" cmd="ls -lt" />
-  <div class="out">
-    <p class="c">total {posts.length} · <a href="/rss.xml">rss.xml</a></p>
-    <table class="ls">
-      <thead><tr><th>DATE</th><th class="hide-sm">MIN</th><th>TITLE</th></tr></thead>
-      <tbody>
+<Base title="Writing" description="Notes on backend systems, infrastructure and operating software in production.">
+  <section class="page-head">
+    <div class="wrap">
+      <p class="eyebrow">Writing</p>
+      <h1>Notes from building and operating things.</h1>
+      <p class="lede">Backend systems, infrastructure, and the lessons that only show up in production. <a href="/rss.xml" class="link">Subscribe via RSS</a>.</p>
+    </div>
+  </section>
+
+  <section class="list">
+    <div class="wrap">
+      <ul>
         {posts.map((p) => (
-          <tr>
-            <td class="n nowrap">{iso(p.data.date)}</td>
-            <td class="c hide-sm">{Math.max(1, Math.round(words(p.body) / 220))}</td>
-            <td>
-              <a href={`/blog/${p.id}/`}>{p.data.title}</a>
-              <div class="c desc">{p.data.description}</div>
-            </td>
-          </tr>
+          <li>
+            <a href={`/blog/${p.id}/`} class="row">
+              <div class="meta mono">
+                <time datetime={p.data.date.toISOString()}>{fmt(p.data.date)}</time>
+                <span>{mins(p.body)} min read</span>
+              </div>
+              <div>
+                <h2>{p.data.title}</h2>
+                <p>{p.data.description}</p>
+                {p.data.tags.length > 0 && <div class="chips">{p.data.tags.map((t) => <span class="chip">{t}</span>)}</div>}
+              </div>
+            </a>
+          </li>
         ))}
-      </tbody>
-    </table>
-  </div>
+      </ul>
+    </div>
+  </section>
 </Base>
 
 <style>
-  .desc { font-size: 0.93em; }
-  td { padding-bottom: 0.8em !important; }
+  .page-head { padding: clamp(56px, 8vw, 104px) 0 clamp(32px, 5vw, 56px); }
+  h1 { margin-top: 14px; font-size: clamp(40px, 5.4vw, 68px); letter-spacing: -0.045em; line-height: 1.03; max-width: 16ch; }
+  .lede { margin-top: 20px; max-width: 56ch; font-size: 19px; color: var(--ink-2); }
+  .list { padding-bottom: 96px; }
+  ul { border-top: 1px solid var(--line); }
+  li { border-bottom: 1px solid var(--line); }
+  .row { display: grid; grid-template-columns: 200px 1fr; gap: 32px; padding: 36px 0; }
+  .meta { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); padding-top: 4px; }
+  h2 { font-size: clamp(22px, 2.4vw, 28px); letter-spacing: -0.025em; margin-bottom: 10px; }
+  .row:hover h2 { color: var(--accent); }
+  .row p { color: var(--ink-2); max-width: 64ch; margin-bottom: 16px; }
+  @media (max-width: 640px) {
+    .row { grid-template-columns: 1fr; gap: 10px; padding: 28px 0; }
+    .meta { flex-direction: row; gap: 12px; }
+  }
 </style>
