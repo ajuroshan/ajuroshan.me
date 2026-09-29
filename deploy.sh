@@ -3,7 +3,7 @@
 # Rollback: ssh oci 'ls /var/www/ajuroshan.me/releases' then point `current` at an older one.
 set -euo pipefail
 
-HOST="${DEPLOY_HOST:-oci}"
+HOST="${DEPLOY_HOST:-deploy@oci}"
 ROOT=/var/www/ajuroshan.me
 REL="$(date -u +%Y%m%dT%H%M%SZ)-$(git rev-parse --short HEAD 2>/dev/null || echo nogit)"
 KEEP=5
