@@ -1,6 +1,6 @@
 {
   "name": "ajuroshan.me",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Personal site of Ajmal Roshan",
   "scripts": {
     "dev": "astro dev",
