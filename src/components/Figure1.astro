@@ -43,20 +43,22 @@
     <text x="538" y="244" class="lab">state &amp; jobs</text>
   </svg>
   <figcaption class="caption">
-    <b>Figure 1:</b> The deployment shape shared by most systems in Table&nbsp;1: a TLS-terminating
+    <b>Fig. 1.</b> The deployment shape shared by most of the systems above: a TLS-terminating
     Nginx load balancer in front of stateless Django application servers, with PostgreSQL for
     state, Redis for caching and queues, and Celery for background work.
   </figcaption>
 </figure>
 
 <style>
-  .fig { margin: 2em 0 1.8em; }
-  svg { width: 100%; height: auto; color: var(--ink); }
-  .edges path { fill: none; stroke: currentColor; stroke-width: 1; }
-  .nodes rect, .cyl { fill: var(--paper); stroke: currentColor; stroke-width: 1; }
+  .fig { margin: 48px 0 0; padding: 28px 0 0; border-top: 1px solid rgba(34, 31, 27, 0.35); display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr); gap: 36px; align-items: end; }
+  svg { width: 100%; height: auto; color: var(--spot); mix-blend-mode: multiply; filter: url(#ink); }
+  .edges path { fill: none; stroke: var(--spot); stroke-width: 1.4; }
+  .nodes rect, .cyl { fill: rgba(0, 120, 191, 0.07); stroke: var(--spot); stroke-width: 1.4; }
   .nodes rect.dbl { stroke-width: 2.2; }
-  text { font: 400 13px var(--serif); fill: currentColor; text-anchor: middle; }
+  text { font: 500 13px var(--serif); fill: var(--ink); text-anchor: middle; }
   text.it { font-style: italic; font-size: 12px; fill: var(--ink-2); }
   text.lab { font-size: 12px; font-variant-caps: all-small-caps; letter-spacing: 0.08em; fill: var(--muted); }
-  .caption { margin-top: 0.8em; }
+  .caption { font-size: 16px; line-height: 1.45; color: var(--ink-2); border-left: 3px solid var(--spot); padding-left: 16px; }
+  .caption b { color: var(--ink); }
+  @media (max-width: 760px) { .fig { grid-template-columns: 1fr; gap: 16px; } }
 </style>

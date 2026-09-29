@@ -2,211 +2,223 @@
 import Base from '../layouts/Base.astro';
 import Figure1 from '../components/Figure1.astro';
 import { getCollection } from 'astro:content';
-import { profile, experience, projects, capabilities } from '../data/profile';
+import { profile, stats, experience, projects, capabilities } from '../data/profile';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-  .slice(0, 5);
-const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-const revised = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-
-// References, numbered in order of first citation.
+  .slice(0, 4);
 const prod = projects.filter((p) => p.kind === 'prod');
-const other = projects.filter((p) => p.kind !== 'prod' && (p.repo || p.url));
-const refs = [
-  ...prod.map((p) => ({ key: p.name, text: p.title, href: p.url! })),
-  ...other.map((p) => ({ key: p.name, text: p.title, href: (p.repo ?? p.url)! })),
-  { key: 'github', text: 'Source code and public repositories', href: 'https://github.com/ajuroshan' },
-  { key: 'linkedin', text: 'Professional profile', href: 'https://linkedin.com/in/ajuroshan' },
-];
-const n = (key: string) => refs.findIndex((r) => r.key === key) + 1;
-const short = (u: string) => u.replace(/^https?:\/\//, '').replace(/\/$/, '');
+const other = projects.filter((p) => p.kind !== 'prod');
+const host = (u: string) => new URL(u).host;
+const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 ---
 <Base>
-  <article class="paper">
-    <header class="titleblock">
-      <h1>{profile.name}<a href="#fn1" class="fnref" id="fnref1" aria-label="footnote 1">*</a></h1>
-      <p class="role">{profile.role}</p>
-      <p class="affil"><i>{profile.location}</i></p>
-      <p class="mono"><a href={`mailto:${profile.email}`}>{profile.email}</a></p>
-      <p class="date">Last revised {revised}</p>
-    </header>
+  <div class="wrap">
+    <!-- lead story -->
+    <section class="lead">
+      <article class="lead-story">
+        <p class="kicker">{profile.role}</p>
+        <h2 class="headline inked">Builds the software a university runs on, then keeps it running.</h2>
+        <p class="deck"><i>Admissions for ten thousand applicants a year, hostel seats for three thousand students, and the bill for every meal in between.</i></p>
+        <div class="cols">
+          <p class="dropcap">
+            I like owning a system end to end: modelling the data, writing the API, putting it
+            behind a load balancer, and being the one who gets paged when it breaks. Most of what I
+            have built started as a paper process at Cochin University of Science and Technology and
+            ended as software that departments now depend on.
+          </p>
+          <p>
+            The admissions platform replaced forms across more than eight departments. Hostel seats
+            are allotted by a location-priority algorithm instead of a spreadsheet. The mess bills
+            itself at the end of every month. Most of it is Django behind Nginx, on PostgreSQL or
+            SQLite, shipped in Docker containers.
+          </p>
+          <p>
+            I am completing a {profile.education.degree} at CUSAT ({profile.education.year}) and work on
+            native iOS apps at Lascade Co. I am open to backend, platform and DevOps roles.
+          </p>
+        </div>
+      </article>
 
-    <section class="abstract justify">
-      <h2 class="unnumbered abs-h">Abstract</h2>
-      <p>
-        I am a backend and DevOps engineer who designs, ships and operates the software behind
-        university admissions, hostel allotment and campus billing at Cochin University of Science
-        and Technology. These systems process more than ten thousand applications a year and serve
-        several thousand students daily. This page describes that work in the format I read most:
-        the systems (§2), the architecture they share (Figure&nbsp;1), my professional experience (§3),
-        other projects (§4) and the tools I use (§5).
-      </p>
+      <aside class="numbers" aria-label="By the numbers">
+        <p class="box-title sc">By the numbers</p>
+        <dl>
+          {stats.map((s) => (
+            <div class="num-row">
+              <dd class="big inked">{s.value}</dd>
+              <dt>{s.label}</dt>
+            </div>
+          ))}
+        </dl>
+        <p class="box-foot mono">Figures are approximate, regular use.</p>
+      </aside>
     </section>
 
-    <p class="keywords noindent"><b><i>Keywords</i></b>&ensp;Django · PostgreSQL · Nginx · Docker · CI/CD · Linux · iOS</p>
-
-    <h2>Introduction</h2>
-    <p>
-      I like owning a system end to end: modelling the data, writing the API, putting it behind a
-      load balancer, and being the one who gets paged when it breaks. Most of what I have built
-      started as a paper process at my university and ended as software that departments now depend
-      on, including the admissions platform <a class="cite" href={`#ref-${n('cusat-fyugp')}`}>[{n('cusat-fyugp')}]</a>,
-      hostel allotment <a class="cite" href={`#ref-${n('cusat-hostels')}`}>[{n('cusat-hostels')}]</a>,
-      mess billing <a class="cite" href={`#ref-${n('messy')}`}>[{n('messy')}]</a> and the
-      cultural-festival registration system <a class="cite" href={`#ref-${n('sargam')}`}>[{n('sargam')}]</a>.
-    </p>
-    <p>
-      I am completing a {profile.education.degree} at {profile.education.school} ({profile.education.year}),
-      and currently work on native iOS applications at Lascade Co.
-    </p>
-
-    <h2>Systems in Production</h2>
-    <p>
-      Table&nbsp;1 lists the systems I built and still maintain. Scale figures are approximate and
-      refer to regular use, not peak events.
-    </p>
-
-    <div class="tbl">
-      <table>
-        <caption><b>Table 1:</b> Production systems, their scale and stack.</caption>
-        <thead>
-          <tr><th>System</th><th class="num">Scale</th><th>Stack</th><th class="num">Ref.</th></tr>
-        </thead>
-        <tbody>
-          {prod.map((p) => (
-            <tr>
-              <td>{p.title}</td>
-              <td class="num">{p.metric}</td>
-              <td>{p.stack.join(', ')}</td>
-              <td class="num"><a href={`#ref-${n(p.name)}`}>[{n(p.name)}]</a></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-
-    {prod.map((p) => (
-      <p class="item noindent"><span class="runin">{p.title}.</span>{p.desc} <a class="cite" href={`#ref-${n(p.name)}`}>[{n(p.name)}]</a></p>
-    ))}
-
-    <Figure1 />
-
-    <h2>Professional Experience</h2>
-    {experience.map((e) => (
-      <div class="job">
-        <p class="noindent">
-          <span class="runin">{e.role},</span> {e.org}. <i class="muted">{e.from} – {e.to}.</i>
-        </p>
-        <ul class="points">{e.notes.map((x) => <li>{x}</li>)}</ul>
+    <!-- production systems -->
+    <section class="section" id="work">
+      <header class="section-title">
+        <h2>In production</h2>
+        <a href="/projects/" class="sc">Full index of work →</a>
+      </header>
+      <div class="stories">
+        {prod.map((p) => (
+          <article class="story">
+            <p class="kicker">{p.metric}</p>
+            <h3 class="story-h">{p.title}</h3>
+            <p>{p.desc}</p>
+            <p class="byline"><i>{p.stack.join(', ')}</i>{p.url && <> · <a href={p.url}>{host(p.url)}</a></>}</p>
+          </article>
+        ))}
       </div>
-    ))}
+      <Figure1 />
+    </section>
 
-    <h2>Other Work</h2>
-    <p class="noindent">
-      Outside production systems I build tools and hardware, mostly to scratch my own itch:
-    </p>
-    <ul class="points">
-      {projects.filter((p) => p.kind !== 'prod').map((p) => (
-        <li>
-          <i>{p.title}</i> — {p.desc}
-          {(p.repo || p.url) && <> <a class="cite" href={`#ref-${n(p.name)}`}>[{n(p.name)}]</a></>}
-        </li>
-      ))}
-    </ul>
+    <div class="two">
+      <!-- experience -->
+      <section class="section" id="experience">
+        <header class="section-title"><h2>Experience</h2></header>
+        {experience.map((e) => (
+          <article class="job">
+            <p class="kicker">{e.from} – {e.to}</p>
+            <h3 class="job-h">{e.role}, <i>{e.org}</i></h3>
+            <ul>{e.notes.map((n) => <li>{n}</li>)}</ul>
+          </article>
+        ))}
+      </section>
 
-    <h2>Tools</h2>
-    <div class="tbl">
-      <table>
-        <caption><b>Table 2:</b> Tools I use regularly, by area.</caption>
-        <thead><tr><th>Area</th><th>Tools</th></tr></thead>
-        <tbody>
-          {capabilities.map((c) => (
-            <tr><td class="area">{c.title}</td><td>{c.tools.join(', ')}</td></tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-
-    {posts.length > 0 && (
-      <>
-        <h2>Notes</h2>
-        <p class="noindent">Shorter write-ups on building and operating these systems. All notes are listed <a href="/blog/">here</a>; there is also an <a href="/rss.xml">RSS feed</a>.</p>
+      <!-- notes -->
+      <section class="section" id="notes">
+        <header class="section-title"><h2>Notes</h2><a href="/blog/" class="sc">All →</a></header>
         <ol class="notes">
-          {posts.map((p, i) => (
+          {posts.map((p) => (
             <li>
-              <span class="nn">{i + 1}.</span>
-              <a href={`/blog/${p.id}/`}>{p.data.title}</a>
-              <span class="leader" aria-hidden="true"></span>
-              <span class="muted nowrap">{fmt(p.data.date)}</span>
+              <time class="kicker" datetime={p.data.date.toISOString()}>{fmt(p.data.date)}</time>
+              <a href={`/blog/${p.id}/`} class="note-h">{p.data.title}</a>
+              <p class="muted">{p.data.description}</p>
             </li>
           ))}
         </ol>
-      </>
-    )}
+      </section>
+    </div>
 
-    <h2 class="unnumbered">References</h2>
-    <ol class="refs">
-      {refs.map((r, i) => (
-        <li id={`ref-${i + 1}`}>
-          <span class="rn">[{i + 1}]</span>
-          <span>{r.text}. <a href={r.href} class="mono">{short(r.href)}</a></span>
-        </li>
-      ))}
-    </ol>
+    <!-- other work -->
+    <section class="section">
+      <header class="section-title"><h2>Also on the desk</h2></header>
+      <div class="briefs">
+        {other.map((p) => (
+          <article>
+            <h3 class="brief-h">{p.title}</h3>
+            <p>{p.desc}</p>
+            {p.repo && <p class="mono"><a href={p.repo}>{p.repo.replace('https://github.com/', '')}</a></p>}
+          </article>
+        ))}
+      </div>
+    </section>
 
-    <hr class="fnrule" />
-    <p class="footnote noindent" id="fn1">
-      <a href="#fnref1">*</a> Correspondence: <a href={`mailto:${profile.email}`}>{profile.email}</a>.
-      Open to backend, platform and DevOps roles.
-    </p>
-  </article>
+    <!-- tools -->
+    <section class="section">
+      <header class="section-title"><h2>Tools of the trade</h2></header>
+      <dl class="tools">
+        {capabilities.map((c) => (
+          <div>
+            <dt class="sc">{c.title}</dt>
+            <dd>{c.tools.join(' · ')}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+
+    <!-- contact coupon -->
+    <section class="section" id="contact">
+      <div class="coupon">
+        <span class="scissors" aria-hidden="true">✂</span>
+        <p class="kicker">Correspondence</p>
+        <h2 class="coupon-h inked misreg">Write to me.</h2>
+        <p>For backend, platform and DevOps work, or to ask about any of the systems above.</p>
+        <p class="coupon-line"><a href={`mailto:${profile.email}`}>{profile.email}</a></p>
+        <p class="mono coupon-alt">
+          <a href="https://github.com/ajuroshan">github.com/ajuroshan</a> · <a href="https://linkedin.com/in/ajuroshan">linkedin.com/in/ajuroshan</a>
+        </p>
+      </div>
+    </section>
+  </div>
 </Base>
 
 <style>
-  .titleblock { text-align: center; margin-bottom: 2.2em; }
-  h1 { font-size: 2.1em; font-weight: 400; line-height: 1.15; letter-spacing: 0.005em; margin-bottom: 0.5em; }
-  .fnref { font-size: 0.45em; vertical-align: super; margin-left: 0.1em; color: var(--ink); }
-  .role { font-size: 1.1em; }
-  .affil { margin-top: 0.1em; }
-  .titleblock .mono { margin-top: 0.3em; font-size: 0.8em; }
-  .date { margin-top: 1em; }
+  /* lead */
+  .lead { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 40px; padding-top: 36px; }
+  .headline { font-size: clamp(34px, 4.6vw, 58px); letter-spacing: -0.025em; line-height: 1.02; margin: 10px 0 14px; font-variation-settings: 'opsz' 60; }
+  .deck { font-size: 1.15em; color: var(--ink-2); margin-bottom: 22px; line-height: 1.4; }
+  .cols { columns: 2 300px; column-gap: 36px; column-rule: 1px solid rgba(34, 31, 27, 0.35); }
+  .cols p { margin-bottom: 0.8em; hyphens: auto; -webkit-hyphens: auto; text-align: justify; }
 
-  .abstract { margin: 0 3.6em; font-size: 0.9em; }
-  .abs-h { text-align: center; font-size: 1em; margin: 0 0 0.4em; }
-  .keywords { margin: 1.3em 3.6em 0; font-size: 0.9em; text-indent: 0; }
+  .numbers { border-left: 1px solid var(--ink); padding-left: 28px; align-self: start; }
+  .box-title { font-weight: 600; padding-bottom: 6px; border-bottom: 3px solid var(--ink); margin-bottom: 4px; }
+  .num-row { padding: 14px 0 12px; border-bottom: 1px solid rgba(34, 31, 27, 0.35); }
+  .num-row dd { margin: 0; }
+  .big { font-size: 52px; line-height: 0.95; font-weight: 700; color: var(--spot); letter-spacing: -0.03em; font-variant-numeric: lining-nums; }
+  .num-row dt { font-size: 15px; line-height: 1.35; color: var(--ink-2); margin-top: 4px; }
+  .box-foot { margin-top: 10px; font-size: 11px; color: var(--muted); }
 
-  .item { margin-top: 0.7em; }
-  .item:first-of-type { margin-top: 0; }
-  .job { margin-bottom: 1em; }
-  .points { margin: 0.35em 0 0; padding-left: 1.4em; }
-  .points li { margin-bottom: 0.25em; }
-  .points li::marker { content: '–  '; }
-  .area { font-weight: 600; white-space: nowrap; }
+  /* stories */
+  .stories { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .story { padding: 0 22px; border-left: 1px solid rgba(34, 31, 27, 0.35); display: flex; flex-direction: column; gap: 10px; }
+  .story:first-child { padding-left: 0; border-left: 0; }
+  .story:last-child { padding-right: 0; }
+  .story-h { font-size: 24px; letter-spacing: -0.015em; line-height: 1.1; }
+  .story p { font-size: 17px; line-height: 1.5; }
+  .byline { font-size: 15px !important; color: var(--ink-2); margin-top: auto !important; padding-top: 6px; }
 
-  .notes { list-style: none; padding: 0; margin: 0.6em 0 0; }
-  .nn { min-width: 1.4em; color: var(--muted); }
-  .notes li { display: flex; align-items: baseline; gap: 0.5em; margin-bottom: 0.2em; }
-  .leader { flex: 1; border-bottom: 1.5px dotted var(--hair); transform: translateY(-0.3em); min-width: 1em; }
-  .nowrap { white-space: nowrap; }
+  /* two-up */
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+  .job { margin-bottom: 26px; }
+  .job-h { font-size: 24px; letter-spacing: -0.01em; margin: 6px 0 8px; font-weight: 600; }
+  .job ul { padding-left: 1.1em; list-style: square; }
+  .job li { margin-bottom: 6px; }
+  .job li::marker { color: var(--spot); }
+  .notes li { padding-bottom: 18px; margin-bottom: 18px; border-bottom: 1px solid rgba(34, 31, 27, 0.35); }
+  .note-h { display: block; font-size: 23px; font-weight: 600; line-height: 1.15; color: var(--ink); text-decoration: none; margin: 6px 0 6px; }
+  .note-h:hover { color: var(--spot-ink); }
 
-  .refs { list-style: none; padding: 0; margin: 0.6em 0 0; font-size: 0.9em; }
-  .refs li { display: grid; grid-template-columns: 2.4em 1fr; margin-bottom: 0.35em; }
-  .refs li:target { background: #f6efd6; }
-  .rn { color: var(--ink-2); }
-  .refs .mono { word-break: break-all; }
+  /* briefs */
+  .briefs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+  .briefs article { padding: 0 22px; border-left: 1px solid rgba(34, 31, 27, 0.35); }
+  .briefs article:first-child { padding-left: 0; border-left: 0; }
+  .brief-h { font-size: 20px; margin-bottom: 6px; }
+  .briefs p { font-size: 16px; line-height: 1.5; }
+  .briefs .mono { margin-top: 8px; font-size: 12px; }
 
-  .fnrule { width: 30%; margin: 2.4em 0 0.6em; border: 0; border-top: 0.75px solid var(--rule); }
-  .footnote { font-size: 0.82em; }
-  .footnote:target { background: #f6efd6; }
+  /* tools */
+  .tools { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px 32px; margin: 0; }
+  .tools dt { font-weight: 600; font-size: 1.05em; border-bottom: 1px solid var(--ink); padding-bottom: 4px; margin-bottom: 8px; }
+  .tools dd { margin: 0; color: var(--ink-2); font-size: 17px; }
 
-  @media (max-width: 900px) {
-    .abstract { margin: 0 0.6em; }
-    .keywords { margin: 1.2em 0.6em 0; }
-    h1 { font-size: 1.8em; }
+  /* coupon */
+  .coupon {
+    position: relative; max-width: 640px; margin: 8px auto 0; padding: 32px 36px 30px;
+    border: 2px dashed var(--ink); text-align: center; background: rgba(255, 252, 244, 0.35);
   }
-  @media (max-width: 560px) {
-    .tbl { overflow-x: auto; }
-    .tbl td:nth-child(3), .tbl th:nth-child(3) { display: none; }
+  .scissors { position: absolute; top: -0.85em; left: 28px; background: var(--paper); padding: 0 8px; font-size: 22px; color: var(--ink); }
+  .coupon-h { font-size: clamp(40px, 6vw, 64px); margin: 8px 0 12px; letter-spacing: -0.03em; }
+  .coupon-line { margin-top: 18px; font-size: 1.35em; font-weight: 600; }
+  .coupon-line a { color: var(--ink); text-decoration-color: var(--spot); text-decoration-thickness: 2px; }
+  .coupon-alt { margin-top: 10px; font-size: 12px; }
+
+  @media (max-width: 1000px) {
+    .lead { grid-template-columns: 1fr; }
+    .numbers { border-left: 0; padding-left: 0; }
+    .numbers dl { display: grid; grid-template-columns: 1fr 1fr; column-gap: 24px; }
+    .stories, .briefs { grid-template-columns: 1fr 1fr; row-gap: 32px; }
+    .story:nth-child(3), .briefs article:nth-child(3) { padding-left: 0; border-left: 0; }
+    .tools { grid-template-columns: 1fr 1fr; }
+    .two { grid-template-columns: 1fr; gap: 0; }
+  }
+  @media (max-width: 600px) {
+    .cols { columns: 1; }
+    .cols p { text-align: left; }
+    .stories, .briefs { grid-template-columns: 1fr; }
+    .story, .briefs article { padding: 0 0 24px !important; border-left: 0 !important; border-bottom: 1px solid rgba(34, 31, 27, 0.35); }
+    .big { font-size: 42px; }
+    .coupon { padding: 28px 20px 24px; }
   }
 </style>

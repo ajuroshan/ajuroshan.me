@@ -3,49 +3,57 @@ import Base from '../layouts/Base.astro';
 import { projects, type Project } from '../data/profile';
 
 const groups: { kind: Project['kind']; title: string; note: string }[] = [
-  { kind: 'prod', title: 'Production systems', note: 'Built and maintained by me, with real users.' },
+  { kind: 'prod', title: 'In production', note: 'Built and maintained by me, with real users.' },
   { kind: 'oss', title: 'Open source', note: 'Tools and hardware with public code.' },
-  { kind: 'lab', title: 'Experiments and infrastructure', note: 'Built to learn, or to run everything else.' },
+  { kind: 'lab', title: 'Experiments & infrastructure', note: 'Built to learn, or to run everything else.' },
 ];
 const short = (u: string) => u.replace(/^https?:\/\//, '').replace(/\/$/, '');
 ---
-<Base title="Projects" description="A catalogue of production systems, open-source tools and experiments by Ajmal Roshan.">
-  <article class="paper appendix">
-    <p class="sc muted kicker">Appendix A</p>
-    <h1>Project Catalogue</h1>
-    <p class="noindent lede">Every project referenced in the <a href="/">main paper</a>, with links and stack.</p>
+<Base title="The work" description="Index of production systems, open-source tools and experiments by Ajmal Roshan.">
+  <div class="wrap">
+    <header class="page-head">
+      <p class="kicker">Index</p>
+      <h1 class="inked">The work</h1>
+      <p class="deck"><i>Everything, production first. Each entry lists scale, stack and where to find it.</i></p>
+    </header>
 
     {groups.map((g) => (
-      <section>
-        <h2>{g.title}</h2>
-        <p class="noindent muted note"><i>{g.note}</i></p>
-        {projects.filter((p) => p.kind === g.kind).map((p) => (
-          <div class="entry">
-            <h3>{p.title}</h3>
-            <p class="noindent">{p.desc}</p>
-            <dl class="meta">
-              {p.metric && <><dt>Scale</dt><dd>{p.metric}</dd></>}
-              <dt>Stack</dt><dd>{p.stack.join(', ')}</dd>
-              {p.url && <><dt>Live</dt><dd><a class="mono" href={p.url}>{short(p.url)}</a></dd></>}
-              {p.repo && <><dt>Code</dt><dd><a class="mono" href={p.repo}>{short(p.repo)}</a></dd></>}
-            </dl>
-          </div>
-        ))}
+      <section class="section">
+        <header class="section-title"><h2>{g.title}</h2><span class="muted"><i>{g.note}</i></span></header>
+        <div class="grid">
+          {projects.filter((p) => p.kind === g.kind).map((p) => (
+            <article class="entry">
+              {p.metric && <p class="kicker">{p.metric}</p>}
+              <h3>{p.title}</h3>
+              <p>{p.desc}</p>
+              <dl>
+                <dt class="sc">Stack</dt><dd>{p.stack.join(', ')}</dd>
+                {p.url && <><dt class="sc">Live</dt><dd><a href={p.url}>{short(p.url)}</a></dd></>}
+                {p.repo && <><dt class="sc">Code</dt><dd><a href={p.repo}>{short(p.repo)}</a></dd></>}
+              </dl>
+            </article>
+          ))}
+        </div>
       </section>
     ))}
-  </article>
+  </div>
 </Base>
 
 <style>
-  .appendix { counter-reset: sec; }
-  .kicker { text-align: center; }
-  h1 { text-align: center; font-weight: 400; font-size: 1.9em; margin: 0.1em 0 0.4em; }
-  .lede { text-align: center; }
-  .note { margin-bottom: 0.4em; }
-  .paper h2::before { content: 'A.' counter(sec); min-width: 2.4em; }
-  .paper h3::before { content: 'A.' counter(sec) '.' counter(sub); min-width: 3.4em; }
-  .entry { margin-bottom: 1.2em; }
-  .meta { display: grid; grid-template-columns: max-content 1fr; gap: 0.1em 1.2em; margin: 0.5em 0 0; font-size: 0.9em; }
-  .meta dt { font-variant-caps: all-small-caps; letter-spacing: 0.06em; color: var(--muted); }
-  .meta dd { margin: 0; }
+  .page-head { padding: 40px 0 8px; max-width: 760px; }
+  h1 { font-size: clamp(48px, 7vw, 88px); letter-spacing: -0.035em; margin: 8px 0 12px; font-variation-settings: 'opsz' 72; }
+  .deck { font-size: 1.15em; color: var(--ink-2); }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); }
+  .entry { padding: 0 32px 32px 0; }
+  .entry:nth-child(even) { padding: 0 0 32px 32px; border-left: 1px solid rgba(34, 31, 27, 0.35); }
+  .entry h3 { font-size: 28px; letter-spacing: -0.015em; margin: 6px 0 10px; }
+  .entry p { margin-bottom: 12px; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 16px; margin: 0; font-size: 16px; }
+  dt { color: var(--muted); }
+  dd { margin: 0; }
+  .section-title span { font-size: 16px; }
+  @media (max-width: 760px) {
+    .grid { grid-template-columns: 1fr; }
+    .entry, .entry:nth-child(even) { padding: 0 0 24px; border-left: 0; border-bottom: 1px solid rgba(34, 31, 27, 0.35); margin-bottom: 24px; }
+  }
 </style>

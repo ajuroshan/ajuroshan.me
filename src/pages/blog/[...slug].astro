@@ -11,65 +11,48 @@ export async function getStaticPaths() {
 const { post } = Astro.props;
 const { Content } = await render(post);
 const date = post.data.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+const mins = Math.max(1, Math.round((post.body ?? '').split(/\s+/).filter(Boolean).length / 220));
 ---
 <Base title={post.data.title} description={post.data.description}>
-  <article class="paper">
-    <header class="titleblock">
-      <h1>{post.data.title}</h1>
-      <p>{profile.name}</p>
-      <p class="mono"><a href={`mailto:${profile.email}`}>{profile.email}</a></p>
-      <p class="date">{date}</p>
+  <article class="wrap article">
+    <header class="head">
+      <p class="kicker">{post.data.tags.join(' · ') || 'Notes'}</p>
+      <h1 class="inked">{post.data.title}</h1>
+      <p class="deck"><i>{post.data.description}</i></p>
+      <p class="byline">By <b>{profile.name}</b> · {date} · {mins} min read</p>
     </header>
-
-    <section class="abstract justify">
-      <h2 class="unnumbered abs-h">Abstract</h2>
-      <p>{post.data.description}</p>
-    </section>
-    {post.data.tags.length > 0 && (
-      <p class="keywords noindent"><b><i>Keywords</i></b>&ensp;{post.data.tags.join(' · ')}</p>
-    )}
-
     <div class="prose"><Content /></div>
-
-    <p class="back noindent"><a href="/blog/">← All notes</a></p>
+    <footer class="end">
+      <hr class="rule-double" />
+      <p>Questions or corrections? Write to <a href={`mailto:${profile.email}`}>{profile.email}</a>. <a href="/blog/">More notes →</a></p>
+    </footer>
   </article>
 </Base>
 
 <style>
-  .titleblock { text-align: center; margin-bottom: 2em; }
-  h1 { font-size: 1.85em; font-weight: 400; line-height: 1.2; margin-bottom: 0.6em; }
-  .titleblock .mono { font-size: 0.8em; margin-top: 0.2em; }
-  .date { margin-top: 0.8em; }
-  .abstract { margin: 0 3.6em; font-size: 0.9em; }
-  .abs-h { text-align: center; font-size: 1em; margin: 0 0 0.4em; }
-  .keywords { margin: 1.2em 3.6em 0; font-size: 0.9em; }
+  .article { max-width: 780px; }
+  .head { padding: 40px 0 22px; border-bottom: 1px solid var(--ink); margin-bottom: 32px; }
+  h1 { font-size: clamp(40px, 6vw, 72px); letter-spacing: -0.03em; line-height: 1; margin: 10px 0 16px; font-variation-settings: 'opsz' 72; }
+  .deck { font-size: 1.25em; line-height: 1.4; color: var(--ink-2); }
+  .byline { margin-top: 18px; font-size: 16px; color: var(--ink-2); }
 
-  .prose { margin-top: 2.2em; }
-  .prose :global(p) { margin: 0; text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
-  .prose :global(p + p) { text-indent: 1.4em; }
-  .prose :global(ul), .prose :global(ol) { margin: 0.5em 0 0.8em; padding-left: 1.4em; }
-  .prose :global(ul li::marker) { content: '–  '; }
-  .prose :global(li) { margin-bottom: 0.3em; }
-  .prose :global(strong) { font-weight: 700; }
-  .prose :global(code) { font-family: var(--mono); font-size: 0.8em; }
-  .prose :global(pre) {
-    margin: 1.2em 0; padding: 0.8em 0; overflow-x: auto;
-    border-top: 0.75px solid var(--rule); border-bottom: 0.75px solid var(--rule);
-    background: transparent !important; font-size: 0.82em; line-height: 1.5;
-  }
-  .prose :global(pre code) { font-size: 1em; }
-  .prose :global(blockquote) { margin: 1em 2em; font-size: 0.95em; }
-  .prose :global(img) { margin: 1.4em auto; }
-  .prose :global(hr) { border: 0; text-align: center; margin: 1.6em 0; }
-  .prose :global(hr)::after { content: '* * *'; letter-spacing: 0.6em; color: var(--muted); }
-  .prose :global(table) { width: 100%; border-collapse: collapse; margin: 1.2em 0; font-size: 0.9em; border-top: 1.5px solid var(--rule); border-bottom: 1.5px solid var(--rule); }
-  .prose :global(thead) { border-bottom: 0.75px solid var(--rule); }
-  .prose :global(th), .prose :global(td) { text-align: left; padding: 0.35em 0.8em 0.35em 0; }
-  .back { margin-top: 3em; }
-
-  @media (max-width: 900px) {
-    .abstract { margin: 0 0.6em; }
-    .keywords { margin: 1.2em 0.6em 0; }
-    .prose :global(p) { text-align: left; }
-  }
+  .prose { font-size: 20px; line-height: 1.6; }
+  .prose :global(> p:first-child::first-letter) { float: left; font-size: 4.2em; line-height: 0.82; padding: 0.06em 0.08em 0 0; font-weight: 600; color: var(--spot); }
+  .prose :global(> * + *) { margin-top: 1em; }
+  .prose :global(h2) { margin-top: 1.8em; font-size: 30px; letter-spacing: -0.015em; padding-top: 10px; border-top: 1px solid var(--ink); }
+  .prose :global(h3) { margin-top: 1.5em; font-size: 23px; }
+  .prose :global(ul) { padding-left: 1.2em; list-style: square; }
+  .prose :global(ol) { padding-left: 1.4em; list-style: decimal; }
+  .prose :global(li) { margin-top: 0.4em; }
+  .prose :global(li::marker) { color: var(--spot); }
+  .prose :global(code) { font-family: var(--mono); font-size: 0.78em; background: rgba(0, 120, 191, 0.08); padding: 0.1em 0.35em; }
+  .prose :global(pre) { padding: 18px 20px; overflow-x: auto; font-size: 14px; line-height: 1.6; border: 1px solid var(--ink); background: rgba(255, 252, 244, 0.5) !important; }
+  .prose :global(pre code) { background: none; padding: 0; font-size: 1em; }
+  .prose :global(blockquote) { margin: 1.4em 0; padding-left: 20px; border-left: 3px solid var(--spot); font-style: italic; font-size: 1.1em; }
+  .prose :global(hr) { border: 0; border-top: 1px solid var(--ink); }
+  .prose :global(table) { width: 100%; border-collapse: collapse; font-size: 17px; border-top: 3px solid var(--ink); border-bottom: 1px solid var(--ink); }
+  .prose :global(th), .prose :global(td) { text-align: left; padding: 8px 12px 8px 0; border-bottom: 1px solid rgba(34, 31, 27, 0.3); }
+  .end { margin-top: 56px; }
+  .end p { margin-top: 14px; color: var(--ink-2); }
+  @media (max-width: 600px) { .prose { font-size: 18.5px; } }
 </style>
