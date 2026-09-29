@@ -1,0 +1,15 @@
+# Categories for auto-generated release notes (label PRs to sort them).
+changelog:
+  exclude:
+    labels: [skip-changelog]
+  categories:
+    - title: Content
+      labels: [content, blog]
+    - title: Features
+      labels: [feature, enhancement]
+    - title: Fixes
+      labels: [bug, fix]
+    - title: Infra & CI
+      labels: [infra, ci]
+    - title: Other
+      labels: ['*']
