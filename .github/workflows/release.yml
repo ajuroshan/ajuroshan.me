@@ -71,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: http://140.245.231.127
+      url: http://129.225.66.211
     steps:
       - uses: actions/checkout@v5
         with:
@@ -96,7 +96,7 @@ jobs:
       - name: smoke test
         run: |
           for i in 1 2 3; do
-            curl -fsS http://140.245.231.127/ | grep -q "$TAG" && { echo "live: $TAG"; exit 0; }
+            curl -fsS http://129.225.66.211/ | grep -q "$TAG" && { echo "live: $TAG"; exit 0; }
             sleep 3
           done
           echo "::error::$TAG not visible on the live site"; exit 1
