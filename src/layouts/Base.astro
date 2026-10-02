@@ -17,15 +17,17 @@ const version = process.env.SITE_VERSION ?? `v${pkg.version}`;
 let sha = 'dev';
 try { sha = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch {}
 const repo = 'https://github.com/ajuroshan/ajuroshan.me';
-const built = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+const issue = pkg.version.split('.')[1] ?? '0';
+const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
 const nav = [
-  { label: 'Paper', href: '/' },
-  { label: 'Projects', href: '/projects/' },
+  { label: 'Front page', href: '/' },
+  { label: 'The work', href: '/projects/' },
   { label: 'Notes', href: '/blog/' },
+  { label: 'Write in', href: `mailto:${profile.email}` },
 ];
 const here = Astro.url.pathname;
-const isOn = (href: string) => (href === '/' ? here === '/' : here.startsWith(href));
+const isOn = (href: string) => (href === '/' ? here === '/' : href.startsWith('/') && here.startsWith(href));
 ---
 <!doctype html>
 <html lang="en">
@@ -38,71 +40,81 @@ const isOn = (href: string) => (href === '/' ? here === '/' : here.startsWith(hr
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="alternate" type="application/rss+xml" title={`${profile.name} — notes`} href="/rss.xml" />
     <link rel="sitemap" href="/sitemap-index.xml" />
-    <meta name="theme-color" content="#e8e5de" />
+    <meta name="theme-color" content="#eee7d8" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:type" content="website" />
   </head>
   <body>
-    <div class="sheet">
-      <a class="stamp no-print" href={`${repo}/releases/tag/${version}`} title={`build ${sha}`}>
-        {profile.handle}.me:{version} [cs.DC] {built}
-      </a>
+    <!-- ink bleed filter used by .inked -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+      <filter id="ink" x="-2%" y="-2%" width="104%" height="104%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="2" seed="3" result="n" />
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="1.7" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </svg>
 
-      <header class="runhead">
-        <a href="/" class="sc rh-name">A. Roshan</a>
-        <nav class="sc no-print" aria-label="primary">
-          {nav.map((n, i) => (
-            <>{i > 0 && <span class="sep" aria-hidden="true">·</span>}<a href={n.href} aria-current={isOn(n.href) ? 'page' : undefined}>{n.label}</a></>
-          ))}
-        </nav>
-      </header>
+    <header class="masthead wrap">
+      <div class="dateline mono">
+        <span>{profile.location}</span>
+        <span class="hide-sm">No. {issue} · {today}</span>
+        <a href={`${repo}/releases/tag/${version}`} title={`build ${sha}`}>{version}</a>
+      </div>
+      <hr class="rule" />
+      {here === '/' ? (
+        <h1 class="flag inked misreg"><a href="/">{profile.name}</a></h1>
+      ) : (
+        <p class="flag flag-sm inked misreg"><a href="/">{profile.name}</a></p>
+      )}
+      <hr class="rule-double" />
+      <nav class="nav sc no-print" aria-label="primary">
+        {nav.map((n) => <a href={n.href} aria-current={isOn(n.href) ? 'page' : undefined}>{n.label}</a>)}
+      </nav>
+      <hr class="rule" />
+    </header>
 
-      <main id="main">
-        <slot />
-      </main>
+    <main id="main">
+      <slot />
+    </main>
 
-      <footer class="colophon">
-        <p class="folio" aria-hidden="true">{here === '/' ? '1' : '2'}</p>
-        <p class="sc muted small">
-          Set in Libertinus · built with Astro · served from Oracle Cloud ·{' '}
-          <a href={repo}>source</a>{' · '}<a href={`${repo}/releases/tag/${version}`}>{version}</a>
-        </p>
-      </footer>
-    </div>
+    <footer class="colophon wrap">
+      <hr class="rule-double" />
+      <div class="colo-in">
+        <p><span class="sc">Colophon.</span> Set in Newsreader and IBM Plex Mono. Two inks, black and riso blue, on uncoated stock. Built with Astro, printed from an Oracle Cloud machine in Hyderabad.</p>
+        <p class="mono"><a href={repo}>source</a> · <a href={`${repo}/releases/tag/${version}`}>{version}</a> · <a href="/rss.xml">rss</a></p>
+      </div>
+    </footer>
 
     <style>
-      .stamp {
-        position: absolute; left: 30px; top: 50%;
-        transform: translateY(-50%) rotate(180deg);
-        writing-mode: vertical-rl;
-        font: 400 22px/1 var(--serif);
-        color: #bdb8ad; letter-spacing: 0.01em; white-space: nowrap;
-        max-height: 90%; overflow: hidden;
+      .masthead { padding-top: 22px; }
+      .dateline {
+        display: flex; justify-content: space-between; gap: 12px;
+        font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2);
+        padding-bottom: 8px;
       }
-      .stamp:hover { color: var(--muted); text-decoration: none; }
-
-      .runhead {
-        display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
-        padding-bottom: 6px; border-bottom: 0.75px solid var(--rule); margin-bottom: 48px;
-        font-size: 0.95em;
+      .dateline a { color: var(--ink-2); text-decoration: none; }
+      .dateline a:hover { color: var(--spot-ink); }
+      .flag {
+        margin: 18px 0 14px; text-align: center;
+        font-size: clamp(54px, 12.5vw, 168px); font-weight: 700; line-height: 0.9;
+        letter-spacing: -0.035em; font-variation-settings: 'opsz' 72;
       }
-      .rh-name { color: var(--ink); }
-      .runhead nav { display: flex; gap: 10px; }
-      .runhead nav a { color: var(--ink-2); }
-      .runhead nav a[aria-current='page'] { color: var(--ink); font-weight: 700; }
-      .sep { color: var(--muted); }
+      .flag-sm { font-size: clamp(40px, 6.5vw, 84px); margin: 14px 0 10px; }
+      .flag a { color: var(--ink); text-decoration: none; }
+      .nav { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 28px; padding: 8px 0 9px; font-size: 1.02em; }
+      .nav a { color: var(--ink); text-decoration: none; }
+      .nav a:hover { color: var(--spot-ink); }
+      .nav a[aria-current='page'] { color: var(--spot-ink); font-weight: 600; }
 
-      .colophon { margin-top: 64px; text-align: center; }
-      .folio { font-size: 0.95em; margin-bottom: 18px; }
-      .small { font-size: 0.8em; line-height: 1.6; }
-      .colophon a { color: var(--muted); }
-      .colophon a:hover { color: var(--ink); }
+      .colophon { margin-top: clamp(64px, 9vw, 112px); padding-bottom: 40px; }
+      .colo-in { display: flex; justify-content: space-between; gap: 24px 48px; flex-wrap: wrap; padding-top: 16px; font-size: 15px; color: var(--ink-2); }
+      .colo-in p:first-child { max-width: 62ch; }
+      .colo-in .mono { font-size: 12px; }
 
-      @media (max-width: 900px) {
-        .stamp { display: none; }
-        .runhead { margin-bottom: 32px; }
+      @media (max-width: 640px) {
+        .hide-sm { display: none; }
+        .nav { gap: 4px 18px; font-size: 0.95em; }
       }
     </style>
   </body>

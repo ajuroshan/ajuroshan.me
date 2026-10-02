@@ -2,14 +2,14 @@
 import Base from '../layouts/Base.astro';
 ---
 <Base title="Not found">
-  <article class="paper nf">
-    <h1>Error 404: Reference Not Found</h1>
-    <p class="noindent">The page you cited does not exist. It may have been moved, or the link contains a typo.</p>
-    <p class="noindent">See instead: <a href="/">the main paper</a>, <a href="/projects/">Appendix A</a>, or <a href="/blog/">the notes</a>.</p>
-  </article>
+  <div class="wrap nf">
+    <p class="kicker">Correction</p>
+    <h1 class="inked misreg">This page was never printed.</h1>
+    <p class="deck"><i>The link may be wrong, or the page has moved. Try the <a href="/">front page</a>, <a href="/projects/">the work</a> or <a href="/blog/">the notes</a>.</i></p>
+  </div>
 </Base>
 <style>
-  .nf { text-align: center; padding: 3em 0 4em; }
-  h1 { font-weight: 400; font-size: 1.7em; margin-bottom: 1em; }
-  .nf p + p { margin-top: 0.6em; }
+  .nf { padding: 72px var(--gutter) 40px; max-width: 900px; }
+  h1 { font-size: clamp(44px, 7vw, 88px); letter-spacing: -0.035em; line-height: 1; margin: 10px 0 18px; }
+  .deck { font-size: 1.2em; color: var(--ink-2); }
 </style>
