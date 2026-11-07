@@ -110,7 +110,7 @@ export const projects: Project[] = [
     group: 'Motorcycle',
     repo: 'https://github.com/ajuroshan/apexdash',
     summary: `Turns my phone into a dark, nerdy speedometer on the handlebars.`,
-    body: `It shows speed, lean and g-force. Engine buzz made the g-force numbers lie, so I wrote a filter, and <a href="/blog/handlebar-vibration/">here's that story</a>.`,
+    body: `Speed, lean angle with the session maximum on the dial, and a g-force circle. It also filters out engine buzz and reports it as a vibration number.`,
     stack: ['Android'],
     image: apex,
     imageAlt: 'The APEX dashboard: speed dial, lean angle of 15 degrees left, and a g-force circle',
