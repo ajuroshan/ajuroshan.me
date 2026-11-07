@@ -14,7 +14,7 @@ const { tag, posts } = Astro.props;
 const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
 ---
 <Base title={`Notes tagged ${tag}`} description={`${posts.length} note${posts.length === 1 ? '' : 's'} by ${site.name} tagged ${tag}.`}>
-  <Window id="tag" title={`Find: files tagged "${tag}"`} icon="folder" w={820} active heading menu={['File', 'Edit', 'View', 'Options', 'Help']} status={[`${posts.length} file(s) found`, 'Searching C:\\Notes']}>
+  <Window id={`tag-${tag}`} title={`Find: files tagged "${tag}"`} icon="folder" w={640} active heading menu={['File', 'Edit', 'View', 'Options', 'Help']} status={[`${posts.length} file(s) found`, 'Searching C:\\Notes']}>
     <div class="sunken-panel">
       <table class="list interactive">
         <thead><tr><th>Name</th><th>Description</th><th>Modified</th></tr></thead>

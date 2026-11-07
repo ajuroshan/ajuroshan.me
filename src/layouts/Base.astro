@@ -9,10 +9,19 @@ import type { ComponentProps } from 'astro/types';
 type Props = ComponentProps<typeof Seo> & { home?: boolean };
 const { home = false, ...seo } = Astro.props;
 const version = import.meta.env.SITE_VERSION || `v${(await import('../../package.json')).default.version}`;
-const menu = [
-  { href: '/', label: 'Desktop', icon: 'computer' },
+const icons = [
+  { href: '/projects/', label: 'My Work', icon: 'computer' },
   { href: '/blog/', label: 'Notes', icon: 'folder' },
-  { href: '/projects/', label: 'Work', icon: 'computer' },
+  { href: '/now/', label: 'System Monitor', icon: 'monitor' },
+  { href: '/#welcome', label: 'README.txt', icon: 'doc' },
+  { href: `mailto:${site.email}`, label: 'Send Mail', icon: 'mail' },
+  { href: `https://github.com/${site.github}`, label: 'GitHub', icon: 'floppy' },
+  { href: 'https://github.com/ajuroshan/ajuroshan.me/releases/tag/v0.4.0', label: 'Old site', icon: 'bin' },
+];
+const menu = [
+  { href: '/#welcome', label: 'Welcome', icon: 'info' },
+  { href: '/blog/', label: 'Notes', icon: 'folder' },
+  { href: '/projects/', label: 'My Work', icon: 'computer' },
   { href: '/now/', label: 'System Monitor', icon: 'monitor' },
   { sep: true },
   { href: `mailto:${site.email}`, label: 'Send mail', icon: 'mail' },
@@ -25,14 +34,18 @@ const menu = [
 <html lang="en">
   <head>
     <Seo {...seo} />
+    <script is:inline>document.documentElement.classList.add('js');</script>
   </head>
   <body>
-    <main class:list={['desktop', home ? 'desktop--home' : 'desktop--inner']} id="top">
+    <main class:list={['desktop', { 'desktop--home': home }]} id="top" data-desk>
+      <nav class="icons" aria-label="Desktop">
+        {icons.map((i) => <a class="icon" href={i.href}><Icon name={i.icon} size={32} /><span>{i.label}</span></a>)}
+      </nav>
       <slot />
     </main>
 
     <nav class="startmenu" id="startmenu" aria-label="Start menu">
-      <div class="band">{site.domain}</div>
+      <div class="band" aria-hidden="true">{site.domain}</div>
       <ul>
         {menu.map((m) => m.sep ? <li class="sep" role="separator"></li> : <li><a href={m.href}><Icon name={m.icon!} size={24} />{m.label}</a></li>)}
       </ul>
@@ -41,7 +54,7 @@ const menu = [
     <div class="taskbar">
       <button class="start" type="button" aria-expanded="false" aria-controls="startmenu" data-start><Icon name="logo" size={16} />Start</button>
       <span class="task-sep" aria-hidden="true"></span>
-      <div class="tasks" data-tasks></div>
+      <div class="tasks" data-tasks role="toolbar" aria-label="Open windows"></div>
       <div class="tray">
         <a href="https://github.com/ajuroshan/ajuroshan.me/releases/latest" class="only-wide" title="Site version">{version}</a>
         <Icon name="clock" size={16} />
@@ -50,69 +63,246 @@ const menu = [
     </div>
 
     <script>
-      // Windows: focus, drag (desktop only), minimize, close; taskbar buttons; start menu; clock.
-      const wins = [...document.querySelectorAll<HTMLElement>('[data-win]')];
+      // A small window manager. Every internal link opens a window on this desktop instead of loading a page:
+      // the target page is fetched, its [data-win] windows are adopted, and the URL is updated.
+      const desk = document.querySelector<HTMLElement>('[data-desk]')!;
       const tasks = document.querySelector<HTMLElement>('[data-tasks]')!;
-      const home = document.querySelector('.desktop--home');
-      const wide = () => matchMedia('(min-width: 701px)').matches;
-      let z = 10;
-
+      const phone = () => matchMedia('(max-width: 700px)').matches;
       const buttons = new Map<HTMLElement, HTMLButtonElement>();
-      for (const w of wins) {
-        if (w.dataset.task === '0') continue;
-        const b = document.createElement('button');
-        b.type = 'button';
-        const ic = w.querySelector('.title-bar-text svg');
-        if (ic) b.appendChild(ic.cloneNode(true));
-        const s = document.createElement('span'); s.textContent = w.dataset.title ?? ''; b.appendChild(s);
-        b.addEventListener('click', () => {
-          if (w.classList.contains('min') || w.classList.contains('closed') || !w.classList.contains('active')) open(w);
-          else { w.classList.add('min'); sync(); }
-        });
-        tasks.appendChild(b); buttons.set(w, b);
-      }
-      const sync = () => {
-        for (const [w, b] of buttons) {
-          b.classList.toggle('hidden', w.classList.contains('closed'));
-          b.setAttribute('aria-pressed', String(w.classList.contains('active') && !w.classList.contains('min')));
-        }
-      };
-      const focus = (w: HTMLElement) => { wins.forEach((x) => x.classList.remove('active')); w.classList.add('active'); w.style.zIndex = String(++z); sync(); };
-      const open = (w: HTMLElement) => { w.classList.remove('min', 'closed'); focus(w); if (!home || !wide()) w.scrollIntoView({ block: 'start', behavior: 'smooth' }); };
+      let z = 10;
+      let cascade = 0;
 
-      for (const w of wins) {
-        w.addEventListener('pointerdown', () => focus(w));
-        w.querySelector('[data-min]')?.addEventListener('click', () => { w.classList.add('min'); w.classList.remove('active'); sync(); });
-        w.querySelector('[data-close]')?.addEventListener('click', () => { w.classList.add('closed'); w.classList.remove('active'); sync(); });
-        const bar = w.querySelector<HTMLElement>('[data-drag]');
-        if (bar && home) bar.addEventListener('pointerdown', (e) => {
-          if (!wide() || (e.target as HTMLElement).closest('button')) return;
-          const r = w.getBoundingClientRect(); const p = (w.offsetParent as HTMLElement).getBoundingClientRect();
+      const wins = () => [...desk.querySelectorAll<HTMLElement>('[data-win]')];
+      const visible = (w: HTMLElement) => !w.classList.contains('min') && !w.classList.contains('closed') && (!w.hasAttribute('data-deferred') || w.classList.contains('opened'));
+
+      function sync() {
+        for (const [w, b] of buttons) {
+          const shown = !w.classList.contains('closed') && (!w.hasAttribute('data-deferred') || w.classList.contains('opened'));
+          b.hidden = !shown;
+          b.setAttribute('aria-pressed', String(w.classList.contains('active') && visible(w)));
+        }
+      }
+      function focus(w: HTMLElement) {
+        wins().forEach((x) => x.classList.toggle('active', x === w));
+        w.style.zIndex = String(++z);
+        sync();
+      }
+      function topmost() {
+        return wins().filter(visible).sort((a, b) => Number(b.style.zIndex || 0) - Number(a.style.zIndex || 0))[0];
+      }
+      function place(w: HTMLElement) {
+        if (phone()) return;
+        const dw = desk.clientWidth, dh = desk.clientHeight;
+        const ww = Math.min(w.offsetWidth || 520, dw - 16);
+        let x = parseFloat(w.style.getPropertyValue('--x'));
+        let y = parseFloat(w.style.getPropertyValue('--y'));
+        if (Number.isNaN(x) || Number.isNaN(y)) {
+          const n = cascade++ % 8;
+          x = Math.round((dw - ww) / 2) - 60 + n * 28;
+          y = 16 + n * 28;
+        }
+        x = Math.max(8, Math.min(x, dw - ww - 8));
+        y = Math.max(8, Math.min(y, dh - 140));
+        w.style.setProperty('--x', `${x}px`);
+        w.style.setProperty('--y', `${y}px`);
+      }
+      function setMax(w: HTMLElement, on: boolean) {
+        w.classList.toggle('max', on);
+        const b = w.querySelector<HTMLElement>('[data-max]');
+        if (b) b.setAttribute('aria-label', on ? 'Restore' : 'Maximize');
+      }
+      function open(w: HTMLElement, fresh = false) {
+        w.classList.remove('min', 'closed');
+        w.classList.add('opened');
+        if (fresh) { place(w); if (phone()) setMax(w, true); }
+        focus(w);
+        if (phone() && !w.classList.contains('max')) w.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      }
+      function minimize(w: HTMLElement) {
+        w.classList.add('min');
+        w.classList.remove('active');
+        const t = topmost(); if (t) focus(t); else sync();
+      }
+      function close(w: HTMLElement) {
+        w.classList.add('closed');
+        w.classList.remove('active', 'opened');
+        setMax(w, false);
+        if (w.dataset.dynamic) { buttons.get(w)?.remove(); buttons.delete(w); w.remove(); }
+        const t = topmost(); if (t) focus(t); else sync();
+      }
+
+      function register(w: HTMLElement) {
+        if (w.dataset.task !== '0') {
+          const b = document.createElement('button');
+          b.type = 'button';
+          const ic = w.querySelector('.title-bar-text svg');
+          if (ic) b.appendChild(ic.cloneNode(true));
+          const s = document.createElement('span'); s.textContent = w.dataset.title ?? ''; b.appendChild(s);
+          b.title = w.dataset.title ?? '';
+          b.addEventListener('click', () => (visible(w) && w.classList.contains('active') ? minimize(w) : open(w)));
+          tasks.appendChild(b); buttons.set(w, b);
+        }
+        w.addEventListener('pointerdown', () => { if (!w.classList.contains('active')) focus(w); });
+        w.addEventListener('focusin', () => { if (!w.classList.contains('active')) focus(w); });
+        w.querySelector('[data-min]')?.addEventListener('click', () => minimize(w));
+        w.querySelector('[data-max]')?.addEventListener('click', () => setMax(w, !w.classList.contains('max')));
+        w.querySelector('[data-close]')?.addEventListener('click', () => close(w));
+        const bar = w.querySelector<HTMLElement>('[data-drag]')!;
+        bar.addEventListener('dblclick', (e) => { if (!(e.target as HTMLElement).closest('button')) setMax(w, !w.classList.contains('max')); });
+        bar.addEventListener('pointerdown', (e) => {
+          if (phone() || w.classList.contains('max') || (e.target as HTMLElement).closest('button') || e.button !== 0) return;
+          const r = w.getBoundingClientRect(), p = desk.getBoundingClientRect();
           const dx = e.clientX - r.left, dy = e.clientY - r.top;
-          const move = (ev: PointerEvent) => { w.style.setProperty('--x', `${Math.max(0, ev.clientX - dx - p.left)}px`); w.style.setProperty('--y', `${Math.max(0, ev.clientY - dy - p.top)}px`); };
-          const up = () => { removeEventListener('pointermove', move); removeEventListener('pointerup', up); };
-          addEventListener('pointermove', move); addEventListener('pointerup', up); e.preventDefault();
+          const move = (ev: PointerEvent) => {
+            const x = Math.max(-r.width + 80, Math.min(ev.clientX - dx - p.left, p.width - 80));
+            const y = Math.max(0, Math.min(ev.clientY - dy - p.top, p.height - 30));
+            w.style.setProperty('--x', `${x}px`); w.style.setProperty('--y', `${y}px`);
+          };
+          const up = () => { removeEventListener('pointermove', move); removeEventListener('pointerup', up); document.body.classList.remove('dragging'); };
+          addEventListener('pointermove', move); addEventListener('pointerup', up);
+          document.body.classList.add('dragging');
+          e.preventDefault();
         });
       }
-      // desktop icons and links that open a window on this page
-      document.querySelectorAll<HTMLAnchorElement>('[data-open]').forEach((a) => a.addEventListener('click', (e) => {
-        const w = document.getElementById(a.dataset.open!); if (!w) return; e.preventDefault(); open(w);
-      }));
-      const first = wins.find((w) => w.classList.contains('active')) ?? wins[0];
-      if (first) focus(first);
+
+      // styles of a fetched page that this document does not have yet
+      function adoptStyles(doc: Document) {
+        const have = new Set([...document.querySelectorAll<HTMLLinkElement>('link[rel=stylesheet]')].map((l) => l.href));
+        doc.querySelectorAll<HTMLLinkElement>('link[rel=stylesheet]').forEach((l) => {
+          const href = new URL(l.getAttribute('href')!, location.href).href;
+          if (!have.has(href)) { const n = document.createElement('link'); n.rel = 'stylesheet'; n.href = href; document.head.appendChild(n); }
+        });
+        const texts = new Set([...document.querySelectorAll('style')].map((s) => s.textContent));
+        doc.querySelectorAll('head style').forEach((s) => { if (!texts.has(s.textContent)) document.head.appendChild(s.cloneNode(true)); });
+      }
+
+      const cache = new Map<string, Promise<Document>>();
+      const load = (path: string) => {
+        if (!cache.has(path)) cache.set(path, fetch(path).then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.text(); }).then((t) => new DOMParser().parseFromString(t, 'text/html')));
+        return cache.get(path)!;
+      };
+
+      async function openUrl(u: URL, push: boolean) {
+        const key = decodeURIComponent(u.hash.slice(1));
+        const byId = key ? document.getElementById(key) : null;
+        if (byId?.matches('[data-win]')) { open(byId); if (push) history.pushState(null, '', u.href); return; }
+        if (!key) {
+          const mine = wins().filter((w) => w.dataset.page === u.pathname && !w.hasAttribute('data-deferred'));
+          if (mine.length) { mine.forEach((w) => open(w)); if (push) history.pushState(null, '', u.href); return; }
+        }
+        document.body.classList.add('busy');
+        try {
+          const doc = await load(u.pathname);
+          adoptStyles(doc);
+          let src = [...doc.querySelectorAll<HTMLElement>('[data-win]')];
+          const one = key ? doc.getElementById(key) : null;
+          src = one?.matches('[data-win]') ? [one as HTMLElement] : src.filter((w) => !w.hasAttribute('data-deferred'));
+          if (!src.length) { location.href = u.href; return; }
+          for (const s of src) {
+            const have = document.getElementById(s.id);
+            if (have?.matches('[data-win]')) { open(have); continue; }
+            const w = document.importNode(s, true) as HTMLElement;
+            w.dataset.dynamic = '1';
+            w.style.removeProperty('--x'); w.style.removeProperty('--y');
+            desk.appendChild(w);
+            register(w);
+            open(w, true);
+          }
+          document.title = doc.title;
+          if (push) history.pushState(null, '', u.href);
+          refreshStatus();
+        } catch {
+          location.href = u.href;
+        } finally {
+          document.body.classList.remove('busy');
+        }
+      }
+
+      document.addEventListener('click', (e) => {
+        const a = (e.target as Element).closest<HTMLAnchorElement>('a[href]');
+        if (phone()) return; // phones navigate between real pages
+        if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || a.target || a.hasAttribute('download')) return;
+        const u = new URL(a.href, location.href);
+        if (u.origin !== location.origin) return;
+        if (/\.(xml|json|png|txt|svg)$/.test(u.pathname) || u.pathname.startsWith('/shutdown')) return;
+        // an anchor inside the current content (a table of contents) scrolls as usual
+        if (u.hash && u.pathname === location.pathname && !document.getElementById(decodeURIComponent(u.hash.slice(1)))?.matches('[data-win]')) return;
+        if (u.hash && u.pathname !== location.pathname) {
+          const t = document.getElementById(decodeURIComponent(u.hash.slice(1)));
+          if (t && !t.matches('[data-win]')) return;
+        }
+        e.preventDefault();
+        setMenu(false);
+        openUrl(u, true);
+      });
+      addEventListener('popstate', () => { if (!phone()) openUrl(new URL(location.href), false); });
+
+      // first paint: register what the page rendered, open the deferred window named in the hash
+      cascade = 0;
+      for (const w of wins()) { register(w); if (!w.hasAttribute('data-deferred')) { w.classList.add('opened'); place(w); } }
+      const hashWin = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+      if (hashWin && hashWin.matches('[data-win]')) open(hashWin, true);
+      else { const first = wins().find((w) => w.classList.contains('active')) ?? wins().find(visible); if (first) focus(first); }
+      addEventListener('resize', () => wins().filter(visible).forEach(place));
 
       // start menu
       const start = document.querySelector<HTMLButtonElement>('[data-start]')!;
       const sm = document.getElementById('startmenu')!;
-      const setMenu = (on: boolean) => { sm.classList.toggle('open', on); start.setAttribute('aria-expanded', String(on)); };
+      function setMenu(on: boolean) {
+        sm.classList.toggle('open', on);
+        start.setAttribute('aria-expanded', String(on));
+        if (on) sm.querySelector<HTMLElement>('a')?.focus();
+      }
       start.addEventListener('click', (e) => { e.stopPropagation(); setMenu(!sm.classList.contains('open')); });
-      document.addEventListener('click', (e) => { if (!sm.contains(e.target as Node)) setMenu(false); });
-      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
+      document.addEventListener('click', (e) => { if (!sm.contains(e.target as Node) && e.target !== start) setMenu(false); });
+      document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        if (sm.classList.contains('open')) { setMenu(false); start.focus(); return; }
+        const t = topmost(); if (t && t.classList.contains('max')) setMax(t, false);
+      });
 
       // clock
       const clock = document.querySelector<HTMLElement>('[data-clock]')!;
       const tick = () => { clock.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); };
       tick(); setInterval(tick, 15_000);
+
+      // System Monitor: re-read /status.json every minute into every monitor on the desktop. Baked numbers stay on failure.
+      const ago = (iso: string, now: Date) => {
+        const m = Math.max(0, Math.round((now.getTime() - new Date(iso).getTime()) / 60000));
+        if (m < 60) return `${m} min`;
+        const h = Math.floor(m / 60);
+        return h < 48 ? `${h} h` : `${Math.floor(h / 24)} d`;
+      };
+      async function refreshStatus() {
+        const roots = document.querySelectorAll<HTMLElement>('[data-running]');
+        if (!roots.length) return;
+        try {
+          const r = await fetch('/status.json', { cache: 'no-store' });
+          if (!r.ok) return;
+          const s = await r.json();
+          const now = new Date(s.generated);
+          for (const root of roots) {
+            const set = (sel: string, v: string) => root.querySelectorAll(sel).forEach((el) => (el.textContent = v));
+            const bar = (k: string, p: number) => root.querySelectorAll<HTMLElement>(`[data-bar=${k}]`).forEach((b) => (b.style.width = `${Math.min(100, Math.round(p))}%`));
+            set('[data-f=uptime]', s.uptime_s < 86400 ? `${Math.floor(s.uptime_s / 3600)} h` : `${Math.floor(s.uptime_s / 86400)} d`);
+            set('[data-f=load]', Number(s.load[0]).toFixed(2));
+            set('[data-f=load1]', Number(s.load[0]).toFixed(2)); set('[data-f=load5]', Number(s.load[1]).toFixed(2)); set('[data-f=load15]', Number(s.load[2]).toFixed(2));
+            set('[data-f=generated]', `${now.toISOString().slice(11, 16)} UTC`);
+            set('[data-f=mem]', (s.mem_used_mb / 1024).toFixed(1));
+            bar('mem', (s.mem_used_mb / s.mem_total_mb) * 100);
+            bar('load', (s.load[0] / (s.cpus || 2)) * 100);
+            for (const svc of s.services) {
+              root.querySelectorAll<HTMLElement>(`[data-id="${svc.id}"]`).forEach((tr) => {
+                const since = tr.querySelector('[data-since]'); if (since) since.textContent = ago(svc.since, now);
+                const st = tr.querySelector('[data-state]'); if (st) st.textContent = svc.state === 'active' ? 'Running' : 'Stopped';
+              });
+            }
+            if (s.brief_last) set('[data-brief]', new Date(s.brief_last).toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }) + ' IST');
+          }
+        } catch {}
+      }
+      refreshStatus();
+      setInterval(refreshStatus, 60_000);
     </script>
   </body>
 </html>

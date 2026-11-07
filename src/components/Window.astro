@@ -10,12 +10,14 @@ interface Props {
   active?: boolean;
   heading?: boolean;   // render the title as the page's h1
   class?: string;
-  task?: boolean;     // show a taskbar button
+  task?: boolean;      // show a taskbar button
+  deferred?: boolean;  // hidden until opened (with JS); always visible without JS
 }
-const { id, title, icon, x, y, w = 520, menu, status, active = false, heading = false, class: cls, task = true } = Astro.props;
-const style = x !== undefined ? `--x:${x}px;--y:${y}px;--w:${w}px` : `--w:${w}px`;
+const { id, title, icon, x, y, w = 520, menu, status, active = false, heading = false, class: cls, task = true, deferred = false } = Astro.props;
+const style = [`--w:${w}px`, x !== undefined && `--x:${x}px`, y !== undefined && `--y:${y}px`].filter(Boolean).join(';');
+const page = Astro.url.pathname;
 ---
-<section class:list={['win', cls, { active }]} id={id} data-win style={style} aria-labelledby={`${id}-t`} data-title={title} data-icon={icon} data-task={task ? '1' : '0'}>
+<section class:list={['win', cls, { active }]} id={id} data-win style={style} aria-labelledby={`${id}-t`} data-title={title} data-page={page} data-task={task ? '1' : '0'} data-deferred={deferred ? '' : undefined}>
   <div class="window">
     <div class="title-bar" data-drag>
       {heading
@@ -23,11 +25,11 @@ const style = x !== undefined ? `--x:${x}px;--y:${y}px;--w:${w}px` : `--w:${w}px
         : <h2 class="title-bar-text" id={`${id}-t`}>{icon && <Icon name={icon} size={16} />}<span>{title}</span></h2>}
       <div class="title-bar-controls">
         <button aria-label="Minimize" data-min type="button"></button>
-        <button aria-label="Maximize" disabled type="button"></button>
+        <button aria-label="Maximize" data-max type="button"></button>
         <button aria-label="Close" data-close type="button"></button>
       </div>
     </div>
-    {menu && <ul class="menubar" role="menubar" aria-label="Menu">{menu.map((m) => <li role="menuitem" aria-disabled="true"><u>{m[0]}</u>{m.slice(1)}</li>)}</ul>}
+    {menu && <ul class="menubar" aria-hidden="true">{menu.map((m) => <li><u>{m[0]}</u>{m.slice(1)}</li>)}</ul>}
     <div class="window-body"><slot /></div>
     {status && <div class="status-bar">{status.map((s) => <p class="status-bar-field">{s}</p>)}</div>}
   </div>

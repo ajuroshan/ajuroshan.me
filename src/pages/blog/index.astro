@@ -2,13 +2,10 @@
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Window from '../../components/Window.astro';
-import Icon from '../../components/Icon.astro';
+import NotesList from '../../components/NotesList.astro';
 import { site } from '../../data/profile';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
-const tags = [...new Set(posts.flatMap((p) => p.data.tags))].sort();
-const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-const kb = (s: string) => `${Math.max(1, Math.round(s.length / 1024))} KB`;
 const ld = {
   '@context': 'https://schema.org', '@type': 'Blog', name: `${site.name} — notes`, url: `${site.url}/blog/`,
   author: { '@type': 'Person', name: site.name, url: site.url },
@@ -16,28 +13,7 @@ const ld = {
 };
 ---
 <Base title="Notes" description={`Notes by ${site.name} on running small systems: Linux, Django, deploys, firmware and the one server that does the chores.`} jsonld={ld}>
-  <Window id="notes" title="C:\Notes" icon="folder" w={820} active heading menu={['File', 'Edit', 'View', 'Go', 'Favorites', 'Help']} status={[`${posts.length} object(s)`, 'Things I worked out while keeping something running']}>
-    <p class="body intro">Things I worked out while keeping something running, written down so I do not work them out twice. Also as <a href="/rss.xml">RSS</a>.</p>
-    <div class="sunken-panel">
-      <table class="list interactive">
-        <thead><tr><th>Name</th><th>Description</th><th>Modified</th><th>Size</th><th>Tags</th></tr></thead>
-        <tbody>
-          {posts.map((p) => (
-            <tr>
-              <td class="nowrap"><a class="rowicon" href={`/blog/${p.id}/`}><Icon name="doc" size={16} />{p.data.title}</a></td>
-              <td>{p.data.description}</td>
-              <td class="nowrap">{fmt(p.data.date)}</td>
-              <td class="nowrap">{kb(p.body ?? '')}</td>
-              <td>{p.data.tags.map((t, i) => <><a href={`/tags/${t}/`}>{t}</a>{i < p.data.tags.length - 1 ? ', ' : ''}</>)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-    <p class="ui tags">Tags: {tags.map((t, i) => <><a href={`/tags/${t}/`}>{t}</a>{i < tags.length - 1 ? ' · ' : ''}</>)}</p>
+  <Window id="notes" title="Notes" icon="folder" w={600} active heading menu={['File', 'Edit', 'View', 'Go', 'Favorites', 'Help']} status={[`${posts.length} object(s)`]}>
+    <NotesList />
   </Window>
 </Base>
-<style>
-  .intro { margin-bottom: 8px; }
-  .tags { margin-top: 8px; }
-</style>

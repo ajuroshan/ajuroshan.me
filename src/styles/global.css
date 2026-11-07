@@ -13,6 +13,7 @@
 html { background: var(--teal); -webkit-text-size-adjust: 100%; }
 body { margin: 0; min-height: 100svh; color: var(--ink); font-family: var(--text); font-size: 13px; line-height: 1.5; padding-bottom: var(--taskbar); }
 img, svg { display: block; max-width: 100%; }
+img { height: auto; }
 .px { image-rendering: pixelated; flex: none; }
 h1, h2, h3, h4 { font-size: inherit; margin: 0; }
 p { margin: 0; }
@@ -23,33 +24,43 @@ a:visited { color: #000080; }
 ::selection { background: var(--navy); color: #fff; }
 
 /* ---------- desktop ---------- */
+/* Without JavaScript the desktop is a normal scrolling page with the windows stacked. With it, windows float. */
 .desktop { position: relative; min-height: calc(100svh - var(--taskbar)); padding: 8px; }
-.desktop--home { height: calc(100svh - var(--taskbar)); overflow: hidden; }
-.icons { display: grid; gap: 6px; width: 84px; position: relative; z-index: 1; }
-.icon { display: grid; justify-items: center; gap: 3px; width: 84px; padding: 4px 2px; text-decoration: none; color: #fff; font-family: var(--ui); font-size: 11px; line-height: 1.15; text-align: center; -webkit-font-smoothing: none; }
+.icons { display: grid; grid-template-columns: repeat(auto-fill, 84px); gap: 6px; margin-bottom: 12px; position: relative; z-index: 1; }
+.icon { display: grid; justify-items: center; align-content: start; gap: 3px; width: 84px; min-height: 64px; padding: 4px 2px; text-decoration: none; color: #fff; font-family: var(--ui); font-size: 11px; line-height: 1.15; text-align: center; -webkit-font-smoothing: none; }
 .icon span { padding: 1px 2px; text-shadow: 1px 1px 0 #000; }
 .icon:visited { color: #fff; }
-.icon:hover span, .icon:focus span { background: var(--navy); text-shadow: none; outline: 1px dotted #fff; outline-offset: -1px; }
+.icon:hover span, .icon:focus-visible span { background: var(--navy); text-shadow: none; outline: 1px dotted #fff; outline-offset: -1px; }
+.icon:focus-visible { outline: none; }
 .icon svg { filter: drop-shadow(1px 1px 0 rgba(0,0,0,.35)); }
 
 /* ---------- windows ---------- */
-.win { width: min(var(--w), 100%); }
-.desktop--home .win { position: absolute; left: var(--x); top: var(--y); }
-.desktop--inner .win { margin: 0 auto 16px; }
+.win { width: min(var(--w), 100%); margin: 0 auto 16px; }
 .win.min, .win.closed { display: none; }
+.js .win[data-deferred]:not(.opened) { display: none; }
 .win:not(.active) .title-bar { background: linear-gradient(90deg, grey, #b5b5b5); }
-.title-bar { cursor: default; user-select: none; }
-.title-bar-text { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.window { display: flex; flex-direction: column; }
+.title-bar { cursor: default; user-select: none; touch-action: none; flex: none; }
+.title-bar-text { display: flex; align-items: center; gap: 4px; min-width: 0; font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; }
 .title-bar-text span { overflow: hidden; text-overflow: ellipsis; }
-.menubar { list-style: none; margin: 0; padding: 2px 0; display: flex; gap: 2px; font-family: var(--ui); font-size: 11px; -webkit-font-smoothing: none; }
+.title-bar-controls { flex: none; }
+.menubar { list-style: none; margin: 0; padding: 2px 0; display: flex; gap: 2px; font-family: var(--ui); font-size: 11px; -webkit-font-smoothing: none; flex: none; }
 .menubar li { padding: 2px 6px; color: #222; }
-.menubar li:hover { background: var(--navy); color: #fff; }
-.menubar li:hover u { border-color: #fff; }
-.window-body { margin: 8px; }
-.window-body.flush { margin: 2px 2px 2px; }
-.status-bar { font-family: var(--ui); font-size: 11px; -webkit-font-smoothing: none; }
+.window-body { margin: 8px; flex: 1 1 auto; min-height: 0; overflow: auto; }
+.status-bar { font-family: var(--ui); font-size: 11px; -webkit-font-smoothing: none; flex: none; }
 .status-bar-field { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .status-bar-field:first-child { flex-grow: 3; }
+body.busy, body.busy * { cursor: progress !important; }
+body.dragging { user-select: none; }
+
+@media (min-width: 701px) {
+  .js .desktop { height: calc(100svh - var(--taskbar)); overflow: hidden; }
+  .js .icons { position: absolute; left: 8px; top: 8px; grid-template-columns: 84px; }
+  .js .win { position: absolute; left: var(--x, 112px); top: var(--y, 16px); margin: 0; width: min(var(--w), calc(100% - 120px)); }
+  .js .win > .window { max-height: calc(100svh - var(--taskbar) - var(--y, 16px) - 8px); resize: both; overflow: hidden; min-width: 260px; min-height: 140px; }
+}
+.win.max { position: fixed !important; left: 0 !important; top: 0 !important; right: 0; bottom: var(--taskbar); width: auto !important; margin: 0 !important; z-index: 900 !important; }
+.win.max > .window { height: 100%; max-height: none !important; width: auto !important; resize: none !important; }
 
 /* ---------- taskbar ---------- */
 .taskbar { position: fixed; left: 0; right: 0; bottom: 0; height: var(--taskbar); background: var(--silver); box-shadow: inset 0 1px #fff, inset 0 2px #dfdfdf, 0 -1px #808080; display: flex; align-items: center; gap: 4px; padding: 3px 2px; z-index: 1000; font-family: var(--ui); font-size: 11px; -webkit-font-smoothing: none; }
@@ -61,7 +72,7 @@ a:visited { color: #000080; }
 .tasks button { width: 160px; max-width: 24vw; justify-content: flex-start; font-weight: 400; }
 .tasks button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tasks button[aria-pressed="true"] { font-weight: 700; background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='2' height='2' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h1v1H0zM1 1h1v1H1z' fill='%23fff'/%3E%3C/svg%3E"); box-shadow: inset -1px -1px #fff, inset 1px 1px #0a0a0a, inset -2px -2px #dfdfdf, inset 2px 2px grey; }
-.tasks button.hidden { display: none; }
+.tasks button[hidden] { display: none; }
 .tray { margin-left: auto; height: 22px; display: flex; align-items: center; gap: 6px; padding: 0 8px 0 6px; box-shadow: inset -1px -1px #fff, inset 1px 1px grey; white-space: nowrap; }
 .tray a { color: inherit; text-decoration: none; }
 
@@ -118,9 +129,11 @@ table.list td.nowrap { white-space: nowrap; }
 
 /* ---------- phones ---------- */
 @media (max-width: 700px) {
-  .desktop--home { height: auto; overflow: visible; }
-  .desktop--home .win { position: static; width: 100%; margin-bottom: 12px; }
-  .icons { width: 100%; grid-template-columns: repeat(auto-fill, 84px); justify-content: start; margin-bottom: 12px; }
-  .tasks { display: none; }
+  .icons { grid-template-columns: repeat(4, 1fr); }
+  .icon { width: auto; }
+  .tasks button { width: 34px; padding: 0 8px; justify-content: center; }
+  .tasks button span { display: none; }
   .tray .only-wide { display: none; }
+  .hide-sm { display: none; }
+  .win.max { z-index: 900 !important; }
 }

@@ -24,7 +24,7 @@ const ld = {
 const toc = headings.filter((h) => h.depth === 2);
 ---
 <Base title={post.data.title} description={post.data.description} type="article" image={`/og/${post.id}.png`} published={post.data.date} updated={post.data.updated} tags={post.data.tags} jsonld={ld}>
-  <Window id="post" title={`${post.id}.md - Notepad`} icon="doc" w={820} active menu={['File', 'Edit', 'Search', 'Help']} status={[`${words} words · ${minutes} min read`, fmt(post.data.date), post.data.tags.join(', ')]}>
+  <Window id={`post-${post.id}`} title={`${post.id}.md - Notepad`} icon="doc" w={760} active heading={false} menu={['File', 'Edit', 'Search', 'Help']} status={[`${words} words · ${minutes} min read`, fmt(post.data.date), post.data.tags.join(', ')]}>
     <article class="paper">
       <header class="head">
         <h1>{post.data.title}</h1>
