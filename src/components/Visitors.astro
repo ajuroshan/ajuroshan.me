@@ -1,14 +1,39 @@
 ---
-// "You are visitor No. 000123". Counted without cookies or tracking scripts.
+// A 90s hit counter that sits on the desktop. Counted without cookies or tracking scripts.
 import { getVisitors } from '../data/status';
 const n = await getVisitors();
-const digits = n === null ? '------' : String(n).padStart(6, '0');
+const digits = String(n ?? 0).padStart(6, '0');
 ---
-<p class="visitors ui" data-visitors>
-  You are visitor No. <span class="odo" aria-label={n === null ? 'unknown' : String(n)}>{[...digits].map((d) => <span>{d}</span>)}</span>
-</p>
+<aside class="hits" data-visitors aria-label={n === null ? 'Visitor counter' : `Visitor number ${n}`}>
+  <p class="hits-title">You are visitor</p>
+  <div class="hits-odo" data-odo data-value={n ?? ''} aria-hidden="true">
+    {[...digits].map((d) => (
+      <span class="hits-cell"><span class="hits-strip" style={`--d:${d}`}>{'0123456789'.split('').map((x) => <span>{x}</span>)}</span></span>
+    ))}
+  </div>
+  <p class="hits-sub">since 7 Nov 2026 · no cookies</p>
+</aside>
+
 <style>
-  .visitors { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
-  .odo { display: inline-flex; gap: 1px; padding: 2px; background: #000; box-shadow: inset 1px 1px grey, inset -1px -1px #fff; }
-  .odo span { display: inline-block; min-width: 11px; padding: 1px 1px; text-align: center; background: linear-gradient(#222, #000 50%, #222); color: #3f3; font: 700 13px/1.1 'Courier New', Courier, monospace; }
+  .hits {
+    position: relative; z-index: 1; width: max-content; margin: 0 0 12px;
+    background: silver; padding: 6px 8px 5px;
+    box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf, inset -2px -2px grey, inset 2px 2px #fff;
+    font-family: var(--ui); -webkit-font-smoothing: none; text-align: center;
+  }
+  .hits-title { font-size: 11px; font-weight: 700; margin-bottom: 4px; }
+  .hits-sub { font-size: 11px; margin-top: 4px; color: #222; }
+  .hits-odo { display: flex; gap: 2px; padding: 3px; background: #000; box-shadow: inset 1px 1px grey, inset -1px -1px #fff; }
+  .hits-cell {
+    --h: 32px; position: relative; display: block; width: 22px; height: var(--h); overflow: hidden;
+    background: linear-gradient(#3a3a3a, #000 18%, #111 50%, #000 82%, #3a3a3a);
+  }
+  .hits-cell::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(0, 0, 0, .7); }
+  .hits-strip { display: flex; flex-direction: column; transform: translateY(calc(var(--d) * -1 * var(--h))); transition: transform 1.4s cubic-bezier(.2, .9, .25, 1); }
+  .hits-strip span { height: var(--h); display: grid; place-items: center; color: #fff; font: 700 24px/1 'Courier New', Courier, monospace; text-shadow: 0 0 6px rgba(255, 255, 255, .35); }
+  .hits-cell:last-child { background: linear-gradient(#5a0000, #200 18%, #300 50%, #200 82%, #5a0000); }
+  @media (min-width: 701px) {
+    :global(.js) .hits { position: absolute; right: 16px; bottom: 16px; margin: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { .hits-strip { transition: none; } }
 </style>
