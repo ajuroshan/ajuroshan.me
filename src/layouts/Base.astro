@@ -16,6 +16,7 @@ const icons = [
   { href: '/#welcome', label: 'README.txt', icon: 'doc' },
   { href: `mailto:${site.email}`, label: 'Send Mail', icon: 'mail' },
   { href: '/activity/', label: 'GitHub Activity', icon: 'floppy' },
+  { href: '/games/minesweeper/', label: 'Minesweeper', icon: 'mine' },
   { href: 'https://github.com/ajuroshan/ajuroshan.me/releases/tag/v0.4.0', label: 'Old site', icon: 'bin' },
 ];
 const menu = [
@@ -24,6 +25,7 @@ const menu = [
   { href: '/projects/', label: 'My Work', icon: 'computer' },
   { href: '/now/', label: 'System Monitor', icon: 'monitor' },
   { href: '/activity/', label: 'GitHub Activity', icon: 'floppy' },
+  { href: '/games/minesweeper/', label: 'Minesweeper', icon: 'mine' },
   { sep: true },
   { href: `mailto:${site.email}`, label: 'Send mail', icon: 'mail' },
   { href: `https://github.com/${site.github}`, label: 'GitHub', icon: 'floppy' },
@@ -64,6 +66,7 @@ const menu = [
     </div>
 
     <script>
+      import '../scripts/minesweeper';
       // A small window manager. Every internal link opens a window on this desktop instead of loading a page:
       // the target page is fetched, its [data-win] windows are adopted, and the URL is updated.
       const desk = document.querySelector<HTMLElement>('[data-desk]')!;

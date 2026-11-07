@@ -13,12 +13,13 @@ interface Props {
   task?: boolean;      // show a taskbar button
   deferred?: boolean;  // hidden until opened (with JS); always visible without JS
   plain?: boolean;     // title is decoration, not a heading (the content has its own)
+  fit?: boolean;       // size the window to its content
 }
-const { id, title, icon, x, y, w = 520, menu, status, active = false, heading = false, class: cls, task = true, deferred = false, plain = false } = Astro.props;
+const { id, title, icon, x, y, w = 520, menu, status, active = false, heading = false, class: cls, task = true, deferred = false, plain = false, fit = false } = Astro.props;
 const style = [`--w:${w}px`, x !== undefined && `--x:${x}px`, y !== undefined && `--y:${y}px`].filter(Boolean).join(';');
 const page = Astro.url.pathname;
 ---
-<section class:list={['win', cls, { active }]} id={id} data-win style={style} aria-labelledby={`${id}-t`} data-title={title} data-page={page} data-task={task ? '1' : '0'} data-deferred={deferred ? '' : undefined}>
+<section class:list={['win', cls, { active, fit }]} id={id} data-win style={style} aria-labelledby={`${id}-t`} data-title={title} data-page={page} data-task={task ? '1' : '0'} data-deferred={deferred ? '' : undefined}>
   <div class="window">
     <div class="title-bar" data-drag>
       {plain

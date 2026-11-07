@@ -1,0 +1,10 @@
+---
+import Base from '../../layouts/Base.astro';
+import Window from '../../components/Window.astro';
+---
+<Base title="Minesweeper" description="Minesweeper, the Windows classic, playable right here. First click is always safe. Right-click or long-press to flag.">
+  <Window id="minesweeper" title="Minesweeper" icon="mine" w={540} active heading fit status={['Right-click or long-press to flag']}>
+    <mine-sweeper id="ms-main"></mine-sweeper>
+    <noscript><p class="ui">Minesweeper needs JavaScript. Sorry, even in 1998 it did.</p></noscript>
+  </Window>
+</Base>
