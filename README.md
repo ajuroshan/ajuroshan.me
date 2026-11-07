@@ -1,35 +1,37 @@
-# ajuroshan.me
+# ajmalroshan.dev
 
-Personal site. Astro (static) + nginx on the OCI always-free VM.
+Personal site of Ajmal Roshan: a late-90s desktop in the browser. Astro (static) + nginx on the OCI always-free ARM VM `arm-free-01`, behind a Cloudflare tunnel.
 
 ```bash
 npm i
 npm run dev        # http://localhost:4321
-npm run deploy     # hotfix: build + deploy the working tree directly
+npm run build && npm run preview
 ```
 
-- Profile, experience, projects, stack: `src/data/profile.ts`
-- Posts: `src/content/blog/*.md` (frontmatter: title, description, date, tags, draft)
-- Server: `/var/www/ajuroshan.me/{releases,current}`, nginx site `/etc/nginx/sites-available/ajuroshan.me`
-- Rollback: `ssh oci 'cd /var/www/ajuroshan.me && ls releases && ln -sfn releases/<old> current'`
+## Where things are
+
+- Words about me, projects, services: `src/data/profile.ts`
+- Notes: `src/content/blog/*.md` (frontmatter: `title`, `description`, `date`, optional `updated`, `tags`, `draft`)
+- Windows, taskbar, Start menu: `src/components/Window.astro`, `src/layouts/Base.astro`
+- Pixel icons (16×16 maps in text, emitted as SVG): `src/components/Icon.astro`
+- Widgets: `src/styles/98.css` (98.css v0.1.21 by Jordan Scales, MIT, one media query patched for lightningcss)
+- SEO: `src/components/Seo.astro` (canonical, Open Graph, Twitter, JSON-LD), sitemap, RSS at `/rss.xml`, OG images rendered at build in `src/pages/og/`
+- Live "System Monitor": reads `/status.json`; snapshot fetched at build, re-read in the browser every minute
+
+## On the box
+
+- `deploy/site-status.sh` → `/usr/local/bin/site-status`, run every minute by `site-status.timer`, writes `/var/www/status/status.json`
+- `deploy/nginx.conf` → `/etc/nginx/sites-available/ajmalroshan.dev` (www and ajuroshan.me 301 to the apex)
+- Releases: `/var/www/ajuroshan.me/{releases,current}`; rollback is `ln -sfn releases/<old> current`
 
 ## Releases
 
-Deploys to production happen **only from tags**. `main` pushes and PRs just build (`ci.yml`).
+Production changes only on a tag. `main` pushes and PRs just build (`ci.yml`).
 
 ```bash
-npm run release:patch   # 0.1.0 -> 0.1.1  (content / fixes)
-npm run release:minor   # 0.1.x -> 0.2.0  (new sections / features)
-npm run release:major   # breaking redesigns
+npm run release:patch   # content / fixes
+npm run release:minor   # new sections
+npm run release:major   # redesigns
 ```
 
-Each runs `npm version`, which bumps `package.json`, commits `release vX.Y.Z` and tags `vX.Y.Z`,
-then pushes with `--follow-tags`. The tag triggers `release.yml`:
-
-1. build (fails if the tag and `package.json` disagree)
-2. GitHub Release with auto-generated notes + `ajuroshan.me-vX.Y.Z.tar.gz`
-3. deploy that exact tarball to the OCI box, then smoke-test that the version is live
-
-The running version is shown in the status bar and links to its release.
-Redeploy an older release: Actions → release → Run workflow → `vX.Y.Z`.
-Tags matching `v*` are protected: they can't be deleted or moved.
+The tag triggers `release.yml`: build (tag must match `package.json`), GitHub Release with the tarball, deploy that tarball over SSH, smoke-test that the version is live. The running version is in the taskbar tray.

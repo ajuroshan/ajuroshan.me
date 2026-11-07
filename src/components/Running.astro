@@ -1,0 +1,68 @@
+---
+// "Running now": the live table read from arm-free-01, drawn as a Task Manager process list.
+// Baked at build, refreshed in the browser every minute.
+import { getStatus, uptime, since, ist, type Status } from '../data/status';
+import { services, box } from '../data/profile';
+
+interface Props { full?: boolean }
+const { full = false } = Astro.props;
+const s = await getStatus();
+const now = new Date(s.generated);
+const rows = Object.keys(services).map((id) => s.services.find((x) => x.id === id)).filter((x): x is Status['services'][number] => !!x).map((x) => ({ ...x, ...services[x.id] }));
+const brief = s.brief_last ? { ...services['morning-brief'], since: s.brief_last } : null;
+const word = (st: string) => (st === 'active' ? 'Running' : st);
+const pct = (a: number, b: number) => Math.round((a / b) * 100);
+---
+<div class="running" data-running>
+  <p class="ui summary">
+    <b>{box.host}</b> · up <b data-f="uptime">{uptime(s.uptime_s)}</b> · load <b data-f="load">{s.load[0].toFixed(2)}</b>
+  </p>
+  <div class="sunken-panel">
+    <table class="list interactive" aria-label="Processes">
+      <thead><tr><th>Program</th><th>What it does</th><th>Up for</th><th>Status</th></tr></thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr data-id={r.id}>
+            <td class="nowrap"><span class="rowicon">{r.label}</span></td>
+            <td>{r.does}</td>
+            <td class="nowrap" data-since={r.since}>{since(r.since, now)}</td>
+            <td class="nowrap" data-state>{word(r.state)}</td>
+          </tr>
+        ))}
+        {brief && (
+          <tr data-id="morning-brief">
+            <td class="nowrap">{brief.label}</td>
+            <td>{brief.does}</td>
+            <td class="nowrap" data-brief={brief.since}>{ist(brief.since)} IST</td>
+            <td class="nowrap">Sent</td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+  {full && (
+    <div class="perf">
+      <fieldset>
+        <legend>Memory</legend>
+        <div class="progress-indicator segmented"><span class="progress-indicator-bar" data-bar="mem" style={`width:${pct(s.mem_used_mb, s.mem_total_mb)}%`}></span></div>
+        <p class="ui"><span data-f="mem">{(s.mem_used_mb / 1024).toFixed(1)}</span> GB of {(s.mem_total_mb / 1024).toFixed(0)} GB in use</p>
+      </fieldset>
+      <fieldset>
+        <legend>Load</legend>
+        <div class="progress-indicator segmented"><span class="progress-indicator-bar" data-bar="load" style={`width:${Math.min(100, Math.round((s.load[0] / s.cpus) * 100))}%`}></span></div>
+        <p class="ui">1 min <b data-f="load1">{s.load[0].toFixed(2)}</b> · 5 min <b data-f="load5">{s.load[1].toFixed(2)}</b> · 15 min <b data-f="load15">{s.load[2].toFixed(2)}</b> on {s.cpus} cores</p>
+      </fieldset>
+    </div>
+  )}
+  <p class="ui foot">Updated every minute. Last read <time data-f="generated" datetime={s.generated}>{now.toISOString().slice(11, 16)} UTC</time>.</p>
+</div>
+
+<style>
+  .summary { margin-bottom: 6px; }
+  .perf { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .perf fieldset p { margin-top: 6px; }
+  .progress-indicator { height: 20px; }
+  .foot { margin-top: 8px; color: #333; }
+  @media (max-width: 600px) { .perf { grid-template-columns: 1fr; } }
+</style>
+

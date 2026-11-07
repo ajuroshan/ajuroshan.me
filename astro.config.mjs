@@ -3,9 +3,12 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  site: 'https://www.ajuroshan.me',
-  integrations: [sitemap()],
+  site: 'https://ajmalroshan.dev',
+  trailingSlash: 'always',
+  integrations: [sitemap({ filter: (page) => !/\/(og|shutdown|404)\b/.test(page) })],
   markdown: {
-    shikiConfig: { theme: 'github-light' },
+    shikiConfig: { theme: 'github-light', wrap: false },
   },
+  build: { inlineStylesheets: 'auto' },
+  prefetch: { prefetchAll: true, defaultStrategy: 'viewport' },
 });

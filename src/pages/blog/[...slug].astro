@@ -1,58 +1,68 @@
 ---
-import Base from '../../layouts/Base.astro';
 import { getCollection, render } from 'astro:content';
-import { profile } from '../../data/profile';
+import Base from '../../layouts/Base.astro';
+import Window from '../../components/Window.astro';
+import { site } from '../../data/profile';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog', ({ data }) => !data.draft);
-  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+  const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+  return posts.map((post, i) => ({ params: { slug: post.id }, props: { post, newer: posts[i - 1], older: posts[i + 1] } }));
 }
-
-const { post } = Astro.props;
-const { Content } = await render(post);
-const date = post.data.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-const mins = Math.max(1, Math.round((post.body ?? '').split(/\s+/).filter(Boolean).length / 220));
+const { post, newer, older } = Astro.props;
+const { Content, headings } = await render(post);
+const words = post.body?.split(/\s+/).length ?? 0;
+const minutes = Math.max(1, Math.round(words / 220));
+const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+const url = `${site.url}/blog/${post.id}/`;
+const ld = {
+  '@context': 'https://schema.org', '@type': 'BlogPosting',
+  headline: post.data.title, description: post.data.description, url, mainEntityOfPage: url,
+  datePublished: post.data.date.toISOString(), dateModified: (post.data.updated ?? post.data.date).toISOString(),
+  keywords: post.data.tags.join(', '), wordCount: words, image: `${site.url}/og/${post.id}.png`,
+  author: { '@type': 'Person', '@id': `${site.url}/#me`, name: site.name, url: site.url },
+};
+const toc = headings.filter((h) => h.depth === 2);
 ---
-<Base title={post.data.title} description={post.data.description}>
-  <article class="wrap article">
-    <header class="head">
-      <p class="kicker">{post.data.tags.join(' · ') || 'Notes'}</p>
-      <h1 class="inked">{post.data.title}</h1>
-      <p class="deck"><i>{post.data.description}</i></p>
-      <p class="byline">By <b>{profile.name}</b> · {date} · {mins} min read</p>
-    </header>
-    <div class="prose"><Content /></div>
-    <footer class="end">
-      <hr class="rule-double" />
-      <p>Questions or corrections? Write to <a href={`mailto:${profile.email}`}>{profile.email}</a>. <a href="/blog/">More notes →</a></p>
-    </footer>
-  </article>
+<Base title={post.data.title} description={post.data.description} type="article" image={`/og/${post.id}.png`} published={post.data.date} updated={post.data.updated} tags={post.data.tags} jsonld={ld}>
+  <Window id={`post-${post.id}`} title={`${post.id}.md - Notepad`} icon="doc" w={760} active plain menu={['File', 'Edit', 'Search', 'Help']} status={[`${words} words · ${minutes} min read`, fmt(post.data.date), post.data.tags.join(', ')]}>
+    <article class="paper">
+      <header class="head">
+        <h1>{post.data.title}</h1>
+        <p class="desc">{post.data.description}</p>
+        <p class="ui meta">
+          <time datetime={post.data.date.toISOString()}>{fmt(post.data.date)}</time>
+          {post.data.updated && <> · updated <time datetime={post.data.updated.toISOString()}>{fmt(post.data.updated)}</time></>}
+          · {minutes} min read
+          {post.data.tags.length > 0 && <> · {post.data.tags.map((t, i) => <><a href={`/tags/${t}/`}>{t}</a>{i < post.data.tags.length - 1 ? ', ' : ''}</>)}</>}
+        </p>
+      </header>
+      {toc.length > 2 && (
+        <nav class="toc" aria-label="In this note">
+          <fieldset><legend>Contents</legend><ol class="ui">{toc.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}</ol></fieldset>
+        </nav>
+      )}
+      <div class="prose"><Content /></div>
+      <footer class="foot">
+        <p class="ui">Written by <a href="/">{site.name}</a> in {site.city}, probably too late at night. Found a mistake? <a href={`mailto:${site.email}?subject=${encodeURIComponent(`Re: ${post.data.title}`)}`}>Tell me</a> or <a href={`https://github.com/ajuroshan/ajuroshan.me/blob/main/src/content/blog/${post.id}.md`}>fix it yourself</a>.</p>
+      </footer>
+    </article>
+    <div class="btns">
+      {older && <a href={`/blog/${older.id}/`}>&lt; Older: {older.data.title}</a>}
+      {newer && <a href={`/blog/${newer.id}/`}>Newer: {newer.data.title} &gt;</a>}
+      <a href="/blog/">All notes</a>
+    </div>
+  </Window>
 </Base>
 
 <style>
-  .article { max-width: 780px; }
-  .head { padding: 40px 0 22px; border-bottom: 1px solid var(--ink); margin-bottom: 32px; }
-  h1 { font-size: clamp(40px, 6vw, 72px); letter-spacing: -0.03em; line-height: 1; margin: 10px 0 16px; font-variation-settings: 'opsz' 72; }
-  .deck { font-size: 1.25em; line-height: 1.4; color: var(--ink-2); }
-  .byline { margin-top: 18px; font-size: 16px; color: var(--ink-2); }
-
-  .prose { font-size: 20px; line-height: 1.6; }
-  .prose :global(> p:first-child::first-letter) { float: left; font-size: 4.2em; line-height: 0.82; padding: 0.06em 0.08em 0 0; font-weight: 600; color: var(--spot); }
-  .prose :global(> * + *) { margin-top: 1em; }
-  .prose :global(h2) { margin-top: 1.8em; font-size: 30px; letter-spacing: -0.015em; padding-top: 10px; border-top: 1px solid var(--ink); }
-  .prose :global(h3) { margin-top: 1.5em; font-size: 23px; }
-  .prose :global(ul) { padding-left: 1.2em; list-style: square; }
-  .prose :global(ol) { padding-left: 1.4em; list-style: decimal; }
-  .prose :global(li) { margin-top: 0.4em; }
-  .prose :global(li::marker) { color: var(--spot); }
-  .prose :global(code) { font-family: var(--mono); font-size: 0.78em; background: rgba(0, 120, 191, 0.08); padding: 0.1em 0.35em; }
-  .prose :global(pre) { padding: 18px 20px; overflow-x: auto; font-size: 14px; line-height: 1.6; border: 1px solid var(--ink); background: rgba(255, 252, 244, 0.5) !important; }
-  .prose :global(pre code) { background: none; padding: 0; font-size: 1em; }
-  .prose :global(blockquote) { margin: 1.4em 0; padding-left: 20px; border-left: 3px solid var(--spot); font-style: italic; font-size: 1.1em; }
-  .prose :global(hr) { border: 0; border-top: 1px solid var(--ink); }
-  .prose :global(table) { width: 100%; border-collapse: collapse; font-size: 17px; border-top: 3px solid var(--ink); border-bottom: 1px solid var(--ink); }
-  .prose :global(th), .prose :global(td) { text-align: left; padding: 8px 12px 8px 0; border-bottom: 1px solid rgba(34, 31, 27, 0.3); }
-  .end { margin-top: 56px; }
-  .end p { margin-top: 14px; color: var(--ink-2); }
-  @media (max-width: 600px) { .prose { font-size: 18.5px; } }
+  .paper { background: #fff; padding: 18px 22px 22px; box-shadow: inset -1px -1px #fff, inset 1px 1px grey, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a; }
+  .head h1 { font-size: 24px; font-weight: 700; line-height: 1.15; }
+  .desc { font-size: 14px; color: #333; margin-top: 6px; max-width: 72ch; }
+  .meta { margin-top: 6px; color: #333; }
+  .toc { margin-top: 14px; max-width: 24rem; }
+  .toc ol { margin: 0; padding-left: 1.4em; }
+  .prose { margin-top: 18px; }
+  .foot { margin-top: 24px; padding-top: 10px; box-shadow: inset 0 1px #808080, inset 0 2px #fff; }
+  .btns { justify-content: flex-start; }
+  @media (max-width: 600px) { .paper { padding: 12px; } }
 </style>

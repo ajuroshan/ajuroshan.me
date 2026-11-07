@@ -1,0 +1,50 @@
+---
+import { getCalendar } from '../data/github';
+import { site } from '../data/profile';
+const cal = await getCalendar(site.github);
+const months: { col: number; label: string }[] = [];
+cal.weeks.forEach((w, i) => {
+  const first = w.find(Boolean);
+  if (!first) return;
+  const m = new Date(first.date + 'T00:00:00Z').toLocaleString('en-GB', { month: 'short', timeZone: 'UTC' });
+  if (!months.length || months[months.length - 1].label !== m) months.push({ col: i, label: m });
+});
+const busiest = cal.weeks.flat().filter(Boolean).sort((a, b) => b.count - a.count)[0];
+const fmt = (d: string) => new Date(d + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'UTC' });
+const label = (d: { date: string; count: number }) => `${d.count === 0 ? 'No' : d.count} contribution${d.count === 1 ? '' : 's'} on ${fmt(d.date)}`;
+---
+<div class="activity">
+  {cal.ok ? (
+    <>
+      <p class="ui sum"><b>{cal.total.toLocaleString('en-GB')}</b> contributions in the last year{busiest && busiest.count > 0 && <>. Busiest day: {fmt(busiest.date)} with {busiest.count}, which explains a lot.</>}</p>
+      <div class="sunken-panel scroller" data-scroll-end>
+        <div class="cal" style={`--weeks:${cal.weeks.length}`} role="img" aria-label={`GitHub contribution calendar: ${cal.total} contributions in the last year`}>
+          <div class="months" aria-hidden="true">{months.map((m) => <span style={`grid-column:${m.col + 1}`}>{m.label}</span>)}</div>
+          <div class="grid">
+            {cal.weeks.map((w) => w.map((d, i) => d && <i class={`l${d.level}`} style={`grid-row:${i + 1}`} title={label(d)}></i>))}
+          </div>
+        </div>
+      </div>
+      <div class="legend ui" aria-hidden="true">Less <i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i> More</div>
+    </>
+  ) : (
+    <p class="ui">Couldn't reach GitHub when this page was built. It's all on <a href={`https://github.com/${site.github}`}>github.com/{site.github}</a>.</p>
+  )}
+</div>
+
+<style>
+  .sum { margin-bottom: 6px; }
+  .scroller { overflow-x: auto; padding: 6px 8px 8px; }
+  .cal { width: max-content; }
+  .months, .grid { display: grid; grid-template-columns: repeat(var(--weeks), 10px); column-gap: 2px; }
+  .months { font-family: var(--ui); font-size: 11px; height: 14px; -webkit-font-smoothing: none; }
+  .months span { white-space: nowrap; }
+  .grid { grid-template-rows: repeat(7, 10px); grid-auto-flow: column; row-gap: 2px; }
+  i { display: block; width: 10px; height: 10px; }
+  .l0 { background: #fff; box-shadow: inset 1px 1px #808080, inset -1px -1px #dfdfdf; }
+  .l1 { background: #9fb3ff; }
+  .l2 { background: #5f7ff0; }
+  .l3 { background: #1f3fd0; }
+  .l4 { background: #000080; }
+  .legend { display: flex; align-items: center; justify-content: flex-end; gap: 3px; margin-top: 6px; }
+</style>
