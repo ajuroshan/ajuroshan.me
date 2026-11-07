@@ -1,0 +1,19 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Window from '../../components/Window.astro';
+import NotesList from '../../components/NotesList.astro';
+import { site } from '../../data/profile';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const ld = {
+  '@context': 'https://schema.org', '@type': 'Blog', name: `${site.name} — notes`, url: `${site.url}/blog/`,
+  author: { '@type': 'Person', name: site.name, url: site.url },
+  blogPost: posts.map((p) => ({ '@type': 'BlogPosting', headline: p.data.title, datePublished: p.data.date.toISOString(), url: `${site.url}/blog/${p.id}/` })),
+};
+---
+<Base title="Notes" description={`Notes by ${site.name}: bugs that ate his evenings, things he built for his bike, and how this site runs.`} jsonld={ld}>
+  <Window id="notes" title="Notes" icon="folder" w={600} active heading menu={['File', 'Edit', 'View', 'Go', 'Favorites', 'Help']} status={[`${posts.length} object(s)`]}>
+    <NotesList />
+  </Window>
+</Base>

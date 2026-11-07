@@ -1,0 +1,72 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Window from '../components/Window.astro';
+import Icon from '../components/Icon.astro';
+import { site, projects } from '../data/profile';
+
+const groups = ['University', 'Motorcycle', 'Tools'] as const;
+const gicon = (g: string) => (g === 'University' ? 'globe' : g === 'Motorcycle' ? 'flag' : 'wrench');
+const host = (u: string) => (u.startsWith('/') ? u : new URL(u).host);
+---
+<Base title="Work" description={`Things ${site.name} built: the software behind a university's admissions, hostel rooms and mess bills, gadgets for his motorcycle, and a few small tools.`}>
+  <Window id="work" title="My Work" icon="computer" w={600} active heading menu={['File', 'Edit', 'View', 'Go', 'Help']} status={[`${projects.length} object(s)`]}>
+    <p class="body intro">Stuff I built that people (or at least I) actually use. The half-finished ones live on <a href="https://github.com/ajuroshan">GitHub</a>.</p>
+    <div class="sunken-panel">
+      {groups.map((g) => (
+        <div class="grp">
+          <p class="ui grp-h"><Icon name="folder" size={16} />{g}</p>
+          <div class="iconsgrid">
+            {projects.filter((p) => p.group === g).map((p) => (
+              <a class="icon" href={`#${p.slug}`}><Icon name={gicon(g)} size={32} /><span>{p.name}</span></a>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </Window>
+
+  {projects.map((p) => (
+    <Window id={p.slug} title={`${p.name} Properties`} icon={gicon(p.group)} w={720} deferred plain>
+      <div class:list={['proj', { 'has-img': !!p.image }]}>
+        <div class="body">
+          <h2 class="ph">{p.name} <span class="ui">({p.kind}, {p.year})</span></h2>
+          <p>{p.summary}</p>
+          <p set:html={p.body} />
+          <fieldset class="facts">
+            <legend>Details</legend>
+            <dl class="ui">
+              <dt>Built with</dt><dd>{p.stack.join(', ')}</dd>
+              {p.url && <><dt>Location</dt><dd><a href={p.url}>{host(p.url)}</a></dd></>}
+              {p.repo && <><dt>Source</dt><dd><a href={p.repo}>{p.repo.replace('https://github.com/', 'github.com/')}</a></dd></>}
+            </dl>
+          </fieldset>
+        </div>
+        {p.image && (
+          <figure class="pic">
+            <Image src={p.image} width={720} widths={[360, 720]} sizes="(max-width: 700px) 100vw, 360px" alt={p.imageAlt ?? ''} loading="lazy" decoding="async" />
+            {p.imageCredit && <figcaption class="ui">{p.imageCredit}</figcaption>}
+          </figure>
+        )}
+      </div>
+      
+    </Window>
+  ))}
+
+</Base>
+
+<style>
+  .intro { margin-bottom: 8px; }
+  .grp-h { display: flex; align-items: center; gap: 6px; padding: 6px 8px 0; background: #fff; font-weight: 700; }
+  .proj { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .proj.has-img { grid-template-columns: 1fr 360px; }
+  .ph { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .ph .ui { font-weight: 400; }
+  .facts { margin-top: 10px; }
+  .facts dl, .tools { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 0; }
+  .facts dd, .tools dd { margin: 0; }
+  .pic { margin: 0; align-self: start; background: #fff; padding: 2px; box-shadow: inset -1px -1px #fff, inset 1px 1px grey, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a; }
+  .pic :global(img) { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; object-position: top; }
+  .pic figcaption { margin-top: 4px; padding: 0 4px 2px; }
+  @media (max-width: 700px) { .proj.has-img { grid-template-columns: 1fr; } .pic { order: -1; } }
+</style>

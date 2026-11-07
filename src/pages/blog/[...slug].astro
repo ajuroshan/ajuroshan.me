@@ -1,0 +1,68 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Window from '../../components/Window.astro';
+import { site } from '../../data/profile';
+
+export async function getStaticPaths() {
+  const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+  return posts.map((post, i) => ({ params: { slug: post.id }, props: { post, newer: posts[i - 1], older: posts[i + 1] } }));
+}
+const { post, newer, older } = Astro.props;
+const { Content, headings } = await render(post);
+const words = post.body?.split(/\s+/).length ?? 0;
+const minutes = Math.max(1, Math.round(words / 220));
+const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+const url = `${site.url}/blog/${post.id}/`;
+const ld = {
+  '@context': 'https://schema.org', '@type': 'BlogPosting',
+  headline: post.data.title, description: post.data.description, url, mainEntityOfPage: url,
+  datePublished: post.data.date.toISOString(), dateModified: (post.data.updated ?? post.data.date).toISOString(),
+  keywords: post.data.tags.join(', '), wordCount: words, image: `${site.url}/og/${post.id}.png`,
+  author: { '@type': 'Person', '@id': `${site.url}/#me`, name: site.name, url: site.url },
+};
+const toc = headings.filter((h) => h.depth === 2);
+---
+<Base title={post.data.title} description={post.data.description} type="article" image={`/og/${post.id}.png`} published={post.data.date} updated={post.data.updated} tags={post.data.tags} jsonld={ld}>
+  <Window id={`post-${post.id}`} title={`${post.id}.md - Notepad`} icon="doc" w={760} active plain menu={['File', 'Edit', 'Search', 'Help']} status={[`${words} words · ${minutes} min read`, fmt(post.data.date), post.data.tags.join(', ')]}>
+    <article class="paper">
+      <header class="head">
+        <h1>{post.data.title}</h1>
+        <p class="desc">{post.data.description}</p>
+        <p class="ui meta">
+          <time datetime={post.data.date.toISOString()}>{fmt(post.data.date)}</time>
+          {post.data.updated && <> · updated <time datetime={post.data.updated.toISOString()}>{fmt(post.data.updated)}</time></>}
+          · {minutes} min read
+          {post.data.tags.length > 0 && <> · {post.data.tags.map((t, i) => <><a href={`/tags/${t}/`}>{t}</a>{i < post.data.tags.length - 1 ? ', ' : ''}</>)}</>}
+        </p>
+      </header>
+      {toc.length > 2 && (
+        <nav class="toc" aria-label="In this note">
+          <fieldset><legend>Contents</legend><ol class="ui">{toc.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}</ol></fieldset>
+        </nav>
+      )}
+      <div class="prose"><Content /></div>
+      <footer class="foot">
+        <p class="ui">Written by <a href="/">{site.name}</a> in {site.city}, probably too late at night. Found a mistake? <a href={`mailto:${site.email}?subject=${encodeURIComponent(`Re: ${post.data.title}`)}`}>Tell me</a> or <a href={`https://github.com/ajuroshan/ajuroshan.me/blob/main/src/content/blog/${post.id}.md`}>fix it yourself</a>.</p>
+      </footer>
+    </article>
+    <div class="btns">
+      {older && <a href={`/blog/${older.id}/`}>&lt; Older: {older.data.title}</a>}
+      {newer && <a href={`/blog/${newer.id}/`}>Newer: {newer.data.title} &gt;</a>}
+      <a href="/blog/">All notes</a>
+    </div>
+  </Window>
+</Base>
+
+<style>
+  .paper { background: #fff; padding: 18px 22px 22px; box-shadow: inset -1px -1px #fff, inset 1px 1px grey, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a; }
+  .head h1 { font-size: 24px; font-weight: 700; line-height: 1.15; }
+  .desc { font-size: 14px; color: #333; margin-top: 6px; max-width: 72ch; }
+  .meta { margin-top: 6px; color: #333; }
+  .toc { margin-top: 14px; max-width: 24rem; }
+  .toc ol { margin: 0; padding-left: 1.4em; }
+  .prose { margin-top: 18px; }
+  .foot { margin-top: 24px; padding-top: 10px; box-shadow: inset 0 1px #808080, inset 0 2px #fff; }
+  .btns { justify-content: flex-start; }
+  @media (max-width: 600px) { .paper { padding: 12px; } }
+</style>
