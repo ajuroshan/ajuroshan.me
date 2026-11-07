@@ -10,7 +10,6 @@ import portrait from '../assets/img/ajmal.png';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf()).slice(0, 5);
 const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-const uni = projects.filter((p) => p.group === 'University');
 const icons = [
   { href: '/projects/', label: 'My Work', icon: 'computer' },
   { href: '/blog/', label: 'Notes', icon: 'folder' },
@@ -18,7 +17,7 @@ const icons = [
   { href: '#welcome', label: 'README.txt', icon: 'doc', open: 'welcome' },
   { href: `mailto:${site.email}`, label: 'Send Mail', icon: 'mail' },
   { href: `https://github.com/${site.github}`, label: 'GitHub', icon: 'floppy' },
-  { href: 'https://github.com/ajuroshan/ajuroshan.me/releases/tag/v0.4.0', label: 'Recycle Bin', icon: 'bin' },
+  { href: 'https://github.com/ajuroshan/ajuroshan.me/releases/tag/v0.4.0', label: 'Old site', icon: 'bin' },
 ];
 ---
 <Base title={site.name} description={site.description} home>
@@ -35,9 +34,9 @@ const icons = [
       </figure>
       <div class="body">
         <h1 class="h1">Ajmal Roshan</h1>
-        <p class="sub"><b>Engineer in Kochi, India.</b> I write the software a university runs on, strap sensors to my motorcycle, and keep one small ARM server doing my chores every morning.</p>
-        <p>Most of what I have built began as a paper process at Cochin University of Science and Technology and ended as software people depend on: admissions for ten thousand applicants a year, hostel seats for three thousand students, the bill for every meal in between. I like owning a system end to end, from the schema to the box it runs on to the pager when it breaks.</p>
-        <p>By day I build iOS apps at Lascade. The rest is on this desktop: the <a href="/projects/">work</a>, the <a href="/blog/">notes</a>, and <a href="/now/">what the server is doing right now</a>.</p>
+        <p class="sub"><b>Engineer in Kochi, India.</b></p>
+        <p>I build the software a university runs on, gadgets for my motorcycle, and small tools for myself. By day I make iOS apps at Lascade.</p>
+        <p>Have a look around. Everything here opens in a window.</p>
       </div>
     </div>
     <div class="welcome-foot">
@@ -50,7 +49,7 @@ const icons = [
     </div>
   </Window>
 
-  <Window id="notes" title="Notes" icon="folder" x={720} y={20} w={600} menu={['File', 'Edit', 'View', 'Help']} status={[`${posts.length} object(s)`, 'ajmalroshan.dev']}>
+  <Window id="notes" title="Notes" icon="folder" x={720} y={20} w={600} menu={['File', 'Edit', 'View', 'Help']} status={[`${posts.length} object(s)`]}>
     <div class="sunken-panel">
       <table class="list interactive">
         <thead><tr><th>Name</th><th>Modified</th><th>Tags</th></tr></thead>
@@ -68,7 +67,7 @@ const icons = [
     </div>
   </Window>
 
-  <Window id="work" title="My Work" icon="computer" x={720} y={270} w={600} menu={['File', 'Edit', 'View', 'Help']} status={[`${projects.length} object(s)`, 'Double-click to open']}>
+  <Window id="work" title="My Work" icon="computer" x={720} y={260} w={600} menu={['File', 'Edit', 'View', 'Help']} status={[`${projects.length} object(s)`]}>
     <div class="iconsgrid">
       {projects.map((p) => (
         <a class="icon" href={`/projects/#${p.slug}`}><Icon name={p.group === 'University' ? 'globe' : p.group === 'Motorcycle' ? 'flag' : 'wrench'} size={32} /><span>{p.name}</span></a>
@@ -76,7 +75,7 @@ const icons = [
     </div>
   </Window>
 
-  <Window id="monitor" title="System Monitor — arm-free-01" icon="monitor" x={120} y={450} w={580} menu={['File', 'Options', 'View', 'Help']} status={['Live', `${uni.length} university systems elsewhere`]}>
+  <Window id="monitor" title="System Monitor — arm-free-01" icon="monitor" x={120} y={400} w={580} menu={['File', 'Options', 'View', 'Help']} status={['Live from arm-free-01']}>
     <Running />
     <div class="btns"><a href="/now/">Details</a></div>
   </Window>

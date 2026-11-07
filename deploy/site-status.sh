@@ -4,7 +4,7 @@
 set -euo pipefail
 OUT=/var/www/status/status.json
 TMP="$OUT.tmp"
-units=(nginx cloudflared hermes-gateway hermes-dashboard wacli-sync tailscaled fail2ban)
+units=(nginx hermes-gateway)   # only what the site shows; keep the rest of the box private
 
 iso() { date -u -d "$1" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%SZ; }
 svc() { printf '{"id":"%s","state":"%s","since":"%s"}' "$1" "$2" "$3"; }
@@ -19,10 +19,6 @@ done
 if hs=$(docker inspect -f '{{.State.Status}} {{.State.StartedAt}}' habit-tracker 2>/dev/null); then
   st=${hs%% *}; [ "$st" = running ] && st=active
   rows+=("$(svc habit-tracker "$st" "$(iso "${hs#* }")")")
-fi
-# the GitHub Actions runner service has a long generated name
-if r=$(systemctl list-units --type=service --no-legend --plain 'actions.runner.*' | awk 'NR==1{print $1}'); [ -n "$r" ]; then
-  rows+=("$(svc actions-runner "$(systemctl is-active "$r" || true)" "$(iso "$(systemctl show -p ActiveEnterTimestamp --value "$r")")")")
 fi
 
 uptime_s=$(cut -d. -f1 /proc/uptime)

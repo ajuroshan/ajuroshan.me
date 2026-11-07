@@ -3,15 +3,15 @@ import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import Window from '../components/Window.astro';
 import Icon from '../components/Icon.astro';
-import { site, projects, tools } from '../data/profile';
+import { site, projects } from '../data/profile';
 
-const groups = ['University', 'Motorcycle', 'Tools and toys'] as const;
+const groups = ['University', 'Motorcycle', 'Tools'] as const;
 const gicon = (g: string) => (g === 'University' ? 'globe' : g === 'Motorcycle' ? 'flag' : 'wrench');
 const host = (u: string) => (u.startsWith('/') ? u : new URL(u).host);
 ---
 <Base title="Work" description={`What ${site.name} has built and runs: the software behind a university's admissions, hostels and mess bills; a motorcycle telemetry logger and dashboard; and small tools for his own desk.`}>
-  <Window id="work" title="My Work" icon="computer" w={820} active heading menu={['File', 'Edit', 'View', 'Go', 'Help']} status={[`${projects.length} object(s)`, 'Each thing in full, with pictures']}>
-    <p class="body intro">The university systems are the ones people depend on; the rest are for the bike and for me. Click an icon to jump to it.</p>
+  <Window id="work" title="My Work" icon="computer" w={820} active heading menu={['File', 'Edit', 'View', 'Go', 'Help']} status={[`${projects.length} object(s)`]}>
+    <p class="body intro">The things worth showing. The rest is on <a href="https://github.com/ajuroshan">GitHub</a>.</p>
     <div class="sunken-panel">
       {groups.map((g) => (
         <div class="grp">
@@ -27,18 +27,16 @@ const host = (u: string) => (u.startsWith('/') ? u : new URL(u).host);
   </Window>
 
   {projects.map((p) => (
-    <Window id={p.slug} title={`${p.name} Properties`} icon={gicon(p.group)} w={820} task={false} status={[p.kind, String(p.year), p.stack.join(', ')]}>
+    <Window id={p.slug} title={`${p.name} Properties`} icon={gicon(p.group)} w={820} task={false}>
       <div class:list={['proj', { 'has-img': !!p.image }]}>
         <div class="body">
           <h2 class="ph">{p.name} <span class="ui">({p.kind}, {p.year})</span></h2>
-          <p><b>{p.summary}</b></p>
-          {p.body.map((b) => <p>{b}</p>)}
+          <p>{p.summary}</p>
+          <p set:html={p.body} />
           <fieldset class="facts">
             <legend>Details</legend>
             <dl class="ui">
-              <dt>Type</dt><dd>{p.kind}</dd>
-              <dt>Year</dt><dd>{p.year}</dd>
-              <dt>Stack</dt><dd>{p.stack.join(', ')}</dd>
+              <dt>Built with</dt><dd>{p.stack.join(', ')}</dd>
               {p.url && <><dt>Location</dt><dd><a href={p.url}>{host(p.url)}</a></dd></>}
               {p.repo && <><dt>Source</dt><dd><a href={p.repo}>{p.repo.replace('https://github.com/', 'github.com/')}</a></dd></>}
             </dl>
@@ -55,11 +53,6 @@ const host = (u: string) => (u.startsWith('/') ? u : new URL(u).host);
     </Window>
   ))}
 
-  <Window id="tools" title="What I reach for" icon="wrench" w={820} task={false} status={['Tools', 'In rough order of how often']}>
-    <dl class="ui tools">
-      {Object.entries(tools).map(([k, v]) => <><dt>{k}</dt><dd>{v.join(', ')}</dd></>)}
-    </dl>
-  </Window>
 </Base>
 
 <style>
@@ -73,6 +66,7 @@ const host = (u: string) => (u.startsWith('/') ? u : new URL(u).host);
   .facts dl, .tools { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 0; }
   .facts dd, .tools dd { margin: 0; }
   .pic { margin: 0; align-self: start; background: #fff; padding: 2px; box-shadow: inset -1px -1px #fff, inset 1px 1px grey, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a; }
+  .pic img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; object-position: top; }
   .pic figcaption { margin-top: 4px; }
   @media (max-width: 700px) { .proj.has-img { grid-template-columns: 1fr; } .pic { order: -1; } }
 </style>
