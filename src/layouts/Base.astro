@@ -12,20 +12,20 @@ const version = import.meta.env.SITE_VERSION || `v${(await import('../../package
 const icons = [
   { href: '/projects/', label: 'My Work', icon: 'computer' },
   { href: '/blog/', label: 'Notes', icon: 'folder' },
-  { href: '/now/', label: 'System Monitor', icon: 'monitor' },
   { href: '/#welcome', label: 'README.txt', icon: 'doc' },
   { href: `mailto:${site.email}`, label: 'Send Mail', icon: 'mail' },
   { href: '/activity/', label: 'GitHub Activity', icon: 'floppy' },
   { href: '/games/minesweeper/', label: 'Minesweeper', icon: 'mine' },
+  { href: '/apps/dos/', label: 'MS-DOS Prompt', icon: 'dos' },
   { href: 'https://github.com/ajuroshan/ajuroshan.me/releases/tag/v0.4.0', label: 'Old site', icon: 'bin' },
 ];
 const menu = [
   { href: '/#welcome', label: 'Welcome', icon: 'info' },
   { href: '/blog/', label: 'Notes', icon: 'folder' },
   { href: '/projects/', label: 'My Work', icon: 'computer' },
-  { href: '/now/', label: 'System Monitor', icon: 'monitor' },
   { href: '/activity/', label: 'GitHub Activity', icon: 'floppy' },
   { href: '/games/minesweeper/', label: 'Minesweeper', icon: 'mine' },
+  { href: '/apps/dos/', label: 'MS-DOS Prompt', icon: 'dos' },
   { sep: true },
   { href: `mailto:${site.email}`, label: 'Send mail', icon: 'mail' },
   { href: `https://github.com/${site.github}`, label: 'GitHub', icon: 'floppy' },
@@ -67,6 +67,7 @@ const menu = [
 
     <script>
       import '../scripts/minesweeper';
+      import '../scripts/dos';
       import { initScreensaver } from '../scripts/pipes';
       initScreensaver();
       // A small window manager. Every internal link opens a window on this desktop instead of loading a page:
@@ -297,44 +298,17 @@ const menu = [
       const tick = () => { clock.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); };
       tick(); setInterval(tick, 15_000);
 
-      // System Monitor: re-read /status.json every minute into every monitor on the desktop. Baked numbers stay on failure.
-      const ago = (iso: string, now: Date) => {
-        const m = Math.max(0, Math.round((now.getTime() - new Date(iso).getTime()) / 60000));
-        if (m < 60) return `${m} min`;
-        const h = Math.floor(m / 60);
-        return h < 48 ? `${h} h` : `${Math.floor(h / 24)} d`;
-      };
+      // Visitor counter: re-read /visitors.json every minute. The baked number stays on failure.
       async function refreshStatus() {
-        const roots = document.querySelectorAll<HTMLElement>('[data-running], [data-visitors]');
-        if (!roots.length) return;
+        const odos = document.querySelectorAll<HTMLElement>('[data-visitors] .odo');
+        if (!odos.length) return;
         try {
-          const r = await fetch('/status.json', { cache: 'no-store' });
+          const r = await fetch('/visitors.json', { cache: 'no-store' });
           if (!r.ok) return;
-          const s = await r.json();
-          if (!s || !Array.isArray(s.services) || !Number.isFinite(s.uptime_s) || !Array.isArray(s.load) || Number.isNaN(Date.parse(s.generated))) return;
-          const now = new Date(s.generated);
-          if (typeof s.visitors === 'number') document.querySelectorAll<HTMLElement>('[data-visitors] .odo').forEach((o) => {
-            const d = String(s.visitors).padStart(6, '0');
-            o.innerHTML = [...d].map((c) => `<span>${c}</span>`).join(''); o.setAttribute('aria-label', String(s.visitors));
-          });
-          for (const root of roots) {
-            const set = (sel: string, v: string) => root.querySelectorAll(sel).forEach((el) => (el.textContent = v));
-            const bar = (k: string, p: number) => root.querySelectorAll<HTMLElement>(`[data-bar=${k}]`).forEach((b) => (b.style.width = `${Math.min(100, Math.round(p))}%`));
-            set('[data-f=uptime]', s.uptime_s < 86400 ? `${Math.floor(s.uptime_s / 3600)} h` : `${Math.floor(s.uptime_s / 86400)} d`);
-            set('[data-f=load]', Number(s.load[0]).toFixed(2));
-            set('[data-f=load1]', Number(s.load[0]).toFixed(2)); set('[data-f=load5]', Number(s.load[1]).toFixed(2)); set('[data-f=load15]', Number(s.load[2]).toFixed(2));
-            set('[data-f=generated]', `${now.toISOString().slice(11, 16)} UTC`);
-            set('[data-f=mem]', (s.mem_used_mb / 1024).toFixed(1));
-            bar('mem', (s.mem_used_mb / s.mem_total_mb) * 100);
-            bar('load', (s.load[0] / (s.cpus || 2)) * 100);
-            for (const svc of s.services) {
-              root.querySelectorAll<HTMLElement>(`[data-id="${svc.id}"]`).forEach((tr) => {
-                const since = tr.querySelector('[data-since]'); if (since) since.textContent = ago(svc.since, now);
-                const st = tr.querySelector('[data-state]'); if (st) st.textContent = svc.state === 'active' ? 'Running' : 'Stopped';
-              });
-            }
-            if (s.brief_last) set('[data-brief]', new Date(s.brief_last).toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }) + ' IST');
-          }
+          const v = (await r.json())?.visitors;
+          if (typeof v !== 'number') return;
+          const d = String(v).padStart(6, '0');
+          odos.forEach((o) => { o.innerHTML = [...d].map((c) => `<span>${c}</span>`).join(''); o.setAttribute('aria-label', String(v)); });
         } catch {}
       }
       refreshStatus();

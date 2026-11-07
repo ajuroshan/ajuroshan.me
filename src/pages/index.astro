@@ -3,7 +3,6 @@ import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import Window from '../components/Window.astro';
 import Icon from '../components/Icon.astro';
-import Running from '../components/Running.astro';
 import NotesList from '../components/NotesList.astro';
 import Activity from '../components/Activity.astro';
 import Visitors from '../components/Visitors.astro';
@@ -48,11 +47,8 @@ import portrait from '../assets/img/ajmal.png';
     </div>
   </Window>
 
-  <Window id="monitor" title="System Monitor" icon="monitor" x={112} y={385} w={560} menu={['File', 'Options', 'View', 'Help']} status={['Live from a free server in Hyderabad']}>
-    <Running full />
-  </Window>
 
-  <Window id="activity" title="GitHub Activity" icon="floppy" x={690} y={540} w={700} status={['Rebuilt with every release']}>
+  <Window id="activity" title="GitHub Activity" icon="floppy" x={112} y={400} w={700} status={['Rebuilt with every release']}>
     <Activity />
   </Window>
 </Base>

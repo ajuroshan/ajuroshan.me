@@ -8,6 +8,8 @@ export default defineConfig({
   redirects: {
     '/blog/reasoning-tokens-ate-my-budget/': '/blog/morning-brief/',
     '/blog/handlebar-vibration/': '/blog/',
+    '/blog/startup-race/': '/blog/',
+    '/now/': '/',
   },
   integrations: [sitemap({ filter: (page) => !/\/(og|shutdown|404)\b/.test(page) })],
   markdown: {

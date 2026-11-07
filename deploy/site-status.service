@@ -1,6 +1,0 @@
-[Unit]
-Description=Write /status.json for ajmalroshan.dev
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/site-status

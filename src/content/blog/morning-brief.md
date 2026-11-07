@@ -1,11 +1,11 @@
 ---
-title: My server texts me my day at 7 am
+title: A script texts me my day at 7 am
 description: A small Python script reads my calendar, mail, WhatsApp and habits, and sends one Telegram message. The third version is the first one I actually read.
 date: 2026-11-06
 tags: [python, telegram, llm, automation]
 ---
 
-Every morning at 7 my phone buzzes with one Telegram message: what's on today, who I owe a reply, which emails actually need me, and whether I skipped the gym yesterday. A cron job on my server writes it. It took three tries to make it something I read instead of swipe away.
+Every morning at 7 my phone buzzes with one Telegram message: what's on today, who I owe a reply, which emails actually need me, and whether I skipped the gym yesterday. A small script writes it. It took three tries to make it something I read instead of swipe away.
 
 ## Version one: everything
 
@@ -40,6 +40,6 @@ The usage numbers explained it: I had capped the reply at 900 tokens, and the ne
 
 Lesson learned: when you change models, read the token usage on the first reply, not just whether it returned 200.
 
-## What it runs on
+## What it's made of
 
-Python with no framework. The calendar and Gmail come through [gog](https://github.com/openclaw/gogcli), WhatsApp through a local sync of my own account, habits from my habit tracker's API, and the model through OpenRouter. It all lives on the same free ARM box as this site.
+Python with no framework, my calendar and inbox, my habit tracker, and a model to do the picking. About 400 lines, most of them formatting.

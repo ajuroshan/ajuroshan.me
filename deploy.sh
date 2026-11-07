@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
-# Ship dist/ to the OCI box and atomically swap the `current` symlink.
+# Ship dist/ to the web host and atomically swap the `current` symlink.
 #   npm run deploy                 build + deploy the working tree (hotfix / local)
 #   SKIP_BUILD=1 RELEASE=v0.1.0    deploy an already-built dist/ (used by release CI)
-# Rollback: ssh deploy@oci 'ls /var/www/ajuroshan.me/releases' then
-#           ln -sfn releases/<old> /var/www/ajuroshan.me/current
+# Rollback: point `current` at an older folder under releases/.
 set -euo pipefail
 
-HOST="${DEPLOY_HOST:-deploy@oci}"
-ROOT=/var/www/ajuroshan.me
+HOST="${DEPLOY_HOST:?set DEPLOY_HOST}"
+ROOT="${DEPLOY_ROOT:?set DEPLOY_ROOT}"
 SHA="$(git rev-parse --short HEAD 2>/dev/null || echo nogit)"
 REL="$(date -u +%Y%m%dT%H%M%SZ)-${RELEASE:-$SHA}"
 KEEP=5

@@ -15,24 +15,11 @@ export const site = {
   city: 'Kochi',
   country: 'India',
   description:
-    "Ajmal Roshan's corner of the internet. Backend code, a motorcycle with too many sensors, and one tiny server that runs his mornings.",
-  tagline: 'Backend code, a bike with too many sensors, and one tiny server that runs my mornings.',
+    "Ajmal Roshan's corner of the internet. Backend code, a motorcycle with too many sensors, and a few small tools that run his mornings.",
+  tagline: 'Backend code, a bike with too many sensors, and a few small tools that run my mornings.',
 };
 
-export const box = {
-  host: 'arm-free-01',
-  place: 'Hyderabad',
-  spec: '2 ARM cores, 12 GB, Ubuntu 24.04, Oracle always-free',
-};
 
-// What each thing on the box does, in my words. Keyed by the ids that status.json reports.
-// What the System Monitor shows. Only these ids are displayed, in this order; the rest of status.json is ignored.
-export const services: Record<string, { label: string; does: string }> = {
-  nginx: { label: 'web server', does: 'serving you this page right now' },
-  'hermes-gateway': { label: 'my assistant', does: 'answers me on Telegram, mostly about my calendar' },
-  'habit-tracker': { label: 'habit tracker', does: 'quietly judging my gym attendance' },
-  'morning-brief': { label: 'morning brief', does: 'texts me my whole day at 7 am' },
-};
 
 export type Project = {
   slug: string;

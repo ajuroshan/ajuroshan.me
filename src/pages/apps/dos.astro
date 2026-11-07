@@ -1,0 +1,20 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Window from '../../components/Window.astro';
+import { site, projects } from '../../data/profile';
+const notes = (await getCollection('blog', ({ data }) => !data.draft)).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const version = import.meta.env.SITE_VERSION || `v${(await import('../../../package.json')).default.version}`;
+const fs = {
+  notes: notes.map((n) => ({ id: n.id, title: n.data.title, date: n.data.date.toISOString().slice(0, 10), description: n.data.description, tags: n.data.tags })),
+  projects: projects.map(({ slug, name, kind, year, summary, url, repo }) => ({ slug, name, kind, year, summary, url, repo })),
+  email: site.email, github: site.github, version,
+};
+---
+<Base title="MS-DOS Prompt" description="An MS-DOS Prompt on Ajmal Roshan's site. Type help. Try ping, dir and a few things you shouldn't.">
+  <Window id="dos" title="MS-DOS Prompt" icon="dos" w={680} active heading>
+    <dos-prompt data-fs={JSON.stringify(fs)}></dos-prompt>
+    <noscript><pre>C:\&gt;help
+This prompt needs JavaScript. Try the <a href="/blog/">notes</a> instead.</pre></noscript>
+  </Window>
+</Base>

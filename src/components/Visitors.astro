@@ -1,8 +1,7 @@
 ---
-// "You are visitor No. 000123", counted on the server from nginx logs (no cookies, no scripts).
-import { getStatus } from '../data/status';
-const s = await getStatus();
-const n = typeof (s as { visitors?: number }).visitors === 'number' ? (s as { visitors?: number }).visitors! : null;
+// "You are visitor No. 000123". Counted without cookies or tracking scripts.
+import { getVisitors } from '../data/status';
+const n = await getVisitors();
 const digits = n === null ? '------' : String(n).padStart(6, '0');
 ---
 <p class="visitors ui" data-visitors>
