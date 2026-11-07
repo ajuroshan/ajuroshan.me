@@ -150,3 +150,28 @@ html:not(.js) .start, html:not(.js) .title-bar-controls, html:not(.js) .tray tim
   .tasks button { min-height: 24px; }
   .tasks button::after { content: ''; position: absolute; inset: -4px 0; }
 }
+
+/* ---------- Minesweeper ---------- */
+.win.fit { width: max-content; max-width: 100%; }
+@media (min-width: 701px) { .js .win.fit { width: max-content; max-width: calc(100% - 120px); } }
+mine-sweeper { display: block; --cell: 18px; font-family: var(--ui); -webkit-font-smoothing: none; }
+@media (pointer: coarse) { mine-sweeper { --cell: 30px; } }
+.ms-bar { margin-bottom: 6px; font-size: 11px; }
+.ms-frame { display: inline-block; padding: 6px; background: silver; box-shadow: inset -2px -2px grey, inset 2px 2px #fff, inset -3px -3px #dfdfdf; max-width: 100%; }
+.ms-top { display: flex; align-items: center; justify-content: space-between; padding: 4px 5px; margin-bottom: 6px; box-shadow: inset 1px 1px grey, inset -1px -1px #fff, inset 2px 2px grey, inset -2px -2px #fff; }
+.ms-led { background: #000; color: #f00; font: 700 22px/1 'Courier New', Courier, monospace; padding: 1px 2px; letter-spacing: 1px; min-width: 48px; text-align: center; box-shadow: inset 1px 1px grey, inset -1px -1px #fff; font-variant-numeric: tabular-nums; }
+button.ms-face { min-width: 0; min-height: 0; width: 30px; height: 30px; padding: 0; display: grid; place-items: center; }
+button.ms-face svg { width: 20px; height: 20px; }
+.ms-grid { display: grid; grid-template-columns: repeat(var(--cols), var(--cell)); box-shadow: inset 2px 2px grey, inset -2px -2px #fff; padding: 3px; overflow-x: auto; max-width: calc(100vw - 48px); touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+button.ms-cell { min-width: 0; min-height: 0; width: var(--cell); height: var(--cell); padding: 0; display: grid; place-items: center; font: 700 13px/1 var(--ui); color: transparent; text-shadow: none; }
+button.ms-cell svg { width: calc(var(--cell) - 4px); height: calc(var(--cell) - 4px); max-width: 16px; max-height: 16px; }
+@media (pointer: coarse) { button.ms-cell { font-size: 16px; } button.ms-cell svg { max-width: 22px; max-height: 22px; } }
+button.ms-cell.open { box-shadow: inset 1px 1px #808080; background: silver; color: #000; }
+button.ms-cell.open:active { box-shadow: inset 1px 1px #808080; }
+button.ms-cell:focus { outline: none; }
+button.ms-cell:focus-visible { outline: 1px dotted #000; outline-offset: -3px; }
+button.ms-cell.open[data-n="1"] { color: #0000ff; } button.ms-cell.open[data-n="2"] { color: #008000; } button.ms-cell.open[data-n="3"] { color: #ff0000; } button.ms-cell.open[data-n="4"] { color: #000080; }
+button.ms-cell.open[data-n="5"] { color: #800000; } button.ms-cell.open[data-n="6"] { color: #008080; } button.ms-cell.open[data-n="7"] { color: #000; } button.ms-cell.open[data-n="8"] { color: #808080; }
+.ms-cell.boom { background: #f00 !important; }
+.ms-cell.wrong { background: #f88; }
+.ms-best { font-size: 11px; margin-top: 6px; }
