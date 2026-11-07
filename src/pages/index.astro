@@ -6,6 +6,7 @@ import Icon from '../components/Icon.astro';
 import Running from '../components/Running.astro';
 import NotesList from '../components/NotesList.astro';
 import Activity from '../components/Activity.astro';
+import Visitors from '../components/Visitors.astro';
 import { site, projects } from '../data/profile';
 import portrait from '../assets/img/ajmal.png';
 
@@ -32,6 +33,7 @@ import portrait from '../assets/img/ajmal.png';
         <a href={`mailto:${site.email}`}>Say hi</a>
       </div>
     </div>
+    <Visitors />
   </Window>
 
   <Window id="notes" title="Notes" icon="folder" x={690} y={16} w={540} menu={['File', 'Edit', 'View', 'Help']}>
@@ -46,7 +48,7 @@ import portrait from '../assets/img/ajmal.png';
     </div>
   </Window>
 
-  <Window id="monitor" title="System Monitor" icon="monitor" x={112} y={350} w={560} menu={['File', 'Options', 'View', 'Help']} status={['Live from a free server in Hyderabad']}>
+  <Window id="monitor" title="System Monitor" icon="monitor" x={112} y={385} w={560} menu={['File', 'Options', 'View', 'Help']} status={['Live from a free server in Hyderabad']}>
     <Running full />
   </Window>
 

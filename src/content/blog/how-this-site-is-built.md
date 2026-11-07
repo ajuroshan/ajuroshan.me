@@ -1,37 +1,37 @@
 ---
 title: How this site is built and shipped
-description: A Windows 98 desktop in my browser, one free ARM server, and deploys that are basically renaming a folder.
+description: A Windows 98 desktop made of plain HTML, one free ARM server in Hyderabad, and deploys that are a folder swap.
 date: 2026-11-07
 tags: [astro, nginx, oci, deploys]
 ---
 
-I wanted my site to feel like the family computer I grew up on. Teal wallpaper, chunky grey buttons, a Start menu that does slightly too much. So that's what this is.
+I wanted my site to feel like the computer I grew up with: teal wallpaper, grey buttons, a Start menu. So it's a desktop.
 
 ## The build
 
-[Astro](https://astro.build) turns everything into plain HTML ahead of time. [98.css](https://jdan.github.io/98.css/) does the heavy lifting on the bevels and title bars, and I'm very grateful to whoever had the patience to get those shadows right.
+[Astro](https://astro.build) renders every page to plain HTML ahead of time. [98.css](https://jdan.github.io/98.css/) draws the bevels and title bars. The icons are 16×16 pixel maps written as text in the code and turned into SVG at build time.
 
-The icons I drew myself, pixel by pixel, as little text maps in the code. A 16×16 floppy disk is 256 decisions and I have opinions about every one of them.
+Every page is a real page, so search engines and people without JavaScript get normal HTML. With JavaScript, clicking a link fetches that page and pulls its window onto your desktop instead of navigating. The URL still changes, so links and the back button work. On phones it just uses normal pages, because dragging windows with your thumb is nobody's idea of fun.
 
-There's a bit of JavaScript to drag windows around and run the Start menu. Turn it off and every page still works, it just stops pretending to be a computer. No analytics, no cookies, nobody watching.
+No analytics, no cookies.
 
 ## The server
 
-It all runs on one Oracle Cloud *Always Free* ARM box in Hyderabad. Free, as in I pay nothing, which still feels like a bug they'll fix someday.
+It's one Oracle Cloud *Always Free* ARM machine: 2 cores and 12 GB of memory, in Hyderabad. It also runs my assistant, my habit tracker and the [morning brief](/blog/morning-brief/), and it mostly sits at a load of 0.1.
 
-Nothing on it is open to the internet. A Cloudflare Tunnel dials out, and Cloudflare hands the requests to nginx. The System Monitor window reads a tiny JSON file the box rewrites every minute, so if you see "Running" there, it really is.
+Nothing on it is open to the internet. A Cloudflare Tunnel connects out, and Cloudflare hands requests to nginx. The System Monitor window reads a small JSON file that a systemd timer rewrites every minute.
 
 ## Deploys
 
-Nothing changes on the live site until I push a version tag. GitHub Actions builds it and copies the build over:
+A release is a folder on the server. Deploying copies the new build into a new folder and points a symlink at it:
 
 ```bash
 rsync -az --delete --link-dest="$ROOT/current/" dist/ "oci:$ROOT/releases/$REL/"
 ssh oci "ln -sfn $ROOT/releases/$REL $ROOT/current.tmp && mv -Tf $ROOT/current.tmp $ROOT/current"
 ```
 
-The whole trick is that last line. Swapping a symlink is one rename, so you never catch the site half-uploaded. If I break something, rolling back is pointing the link at yesterday's folder. I have done this more than once.
+Swapping a symlink with `mv -T` is a single rename, so nobody ever sees a half-uploaded site. Rolling back means pointing the link at the previous folder. The last five stay around for that.
 
 ## Why not Vercel?
 
-Honestly, Vercel would be easier. But the box was already sitting there doing my chores, and I like knowing exactly where every byte comes from. Also it's more fun this way.
+Vercel would be easier. But the box was already on and doing my chores, and I like knowing where every byte comes from.

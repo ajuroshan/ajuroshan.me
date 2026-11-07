@@ -175,3 +175,6 @@ button.ms-cell.open[data-n="5"] { color: #800000; } button.ms-cell.open[data-n="
 .ms-cell.boom { background: #f00 !important; }
 .ms-cell.wrong { background: #f88; }
 .ms-best { font-size: 11px; margin-top: 6px; }
+
+/* ---------- screensaver ---------- */
+.screensaver { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 5000; background: #000; cursor: none; }

@@ -5,6 +5,10 @@ import sitemap from '@astrojs/sitemap';
 export default defineConfig({
   site: 'https://ajmalroshan.dev',
   trailingSlash: 'always',
+  redirects: {
+    '/blog/reasoning-tokens-ate-my-budget/': '/blog/morning-brief/',
+    '/blog/handlebar-vibration/': '/blog/',
+  },
   integrations: [sitemap({ filter: (page) => !/\/(og|shutdown|404)\b/.test(page) })],
   markdown: {
     shikiConfig: { theme: 'github-light', wrap: false },
