@@ -5,7 +5,6 @@ import Window from '../components/Window.astro';
 import Icon from '../components/Icon.astro';
 import NotesList from '../components/NotesList.astro';
 import Activity from '../components/Activity.astro';
-import Visitors from '../components/Visitors.astro';
 import { site, projects } from '../data/profile';
 import portrait from '../assets/img/ajmal.png';
 
@@ -32,7 +31,6 @@ import portrait from '../assets/img/ajmal.png';
         <a href={`mailto:${site.email}`}>Say hi</a>
       </div>
     </div>
-    <Visitors />
   </Window>
 
   <Window id="notes" title="Notes" icon="folder" x={690} y={16} w={540} menu={['File', 'Edit', 'View', 'Help']}>
@@ -48,7 +46,7 @@ import portrait from '../assets/img/ajmal.png';
   </Window>
 
 
-  <Window id="activity" title="GitHub Activity" icon="floppy" x={112} y={400} w={700} status={['Rebuilt with every release']}>
+  <Window id="activity" title="GitHub Activity" icon="floppy" x={112} y={400} w={560} status={['Rebuilt with every release']}>
     <Activity />
   </Window>
 </Base>

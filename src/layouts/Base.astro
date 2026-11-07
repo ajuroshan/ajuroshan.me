@@ -3,6 +3,7 @@ import '../styles/98.css'; // 98.css v0.1.21 by Jordan Scales, MIT, patched for 
 import '../styles/global.css';
 import Seo from '../components/Seo.astro';
 import Icon from '../components/Icon.astro';
+import Visitors from '../components/Visitors.astro';
 import { site } from '../data/profile';
 import type { ComponentProps } from 'astro/types';
 
@@ -44,6 +45,7 @@ const menu = [
       <nav class="icons" aria-label="Desktop">
         {icons.map((i) => <a class="icon" href={i.href}><Icon name={i.icon} size={32} /><span>{i.label}</span></a>)}
       </nav>
+      <Visitors />
       <slot />
     </main>
 
@@ -298,17 +300,27 @@ const menu = [
       const tick = () => { clock.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); };
       tick(); setInterval(tick, 15_000);
 
-      // Visitor counter: re-read /visitors.json every minute. The baked number stays on failure.
+      // Visitor counter: roll the odometer from zero to the real number, then follow /visitors.json every minute.
+      function setOdo(v: number) {
+        document.querySelectorAll<HTMLElement>('[data-odo]').forEach((o) => {
+          const d = String(v).padStart(o.children.length, '0').slice(-o.children.length);
+          [...o.querySelectorAll<HTMLElement>('.hits-strip')].forEach((s, i) => s.style.setProperty('--d', d[i]));
+          o.closest('[data-visitors]')?.setAttribute('aria-label', `Visitor number ${v}`);
+        });
+      }
+      const odo = document.querySelector<HTMLElement>('[data-odo]');
+      const baked = Number(odo?.dataset.value);
+      if (odo && Number.isFinite(baked) && odo.dataset.value) {
+        setOdo(0);
+        requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => setOdo(baked), 250)));
+      }
       async function refreshStatus() {
-        const odos = document.querySelectorAll<HTMLElement>('[data-visitors] .odo');
-        if (!odos.length) return;
+        if (!document.querySelector('[data-odo]')) return;
         try {
           const r = await fetch('/visitors.json', { cache: 'no-store' });
           if (!r.ok) return;
           const v = (await r.json())?.visitors;
-          if (typeof v !== 'number') return;
-          const d = String(v).padStart(6, '0');
-          odos.forEach((o) => { o.innerHTML = [...d].map((c) => `<span>${c}</span>`).join(''); o.setAttribute('aria-label', String(v)); });
+          if (typeof v === 'number') setTimeout(() => setOdo(v), 1700);
         } catch {}
       }
       refreshStatus();
