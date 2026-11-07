@@ -137,3 +137,16 @@ table.list td.nowrap { white-space: nowrap; }
   .hide-sm { display: none; }
   .win.max { z-index: 900 !important; }
 }
+
+/* focus rings on title-bar buttons (98.css removes them) */
+.title-bar-controls button:focus-visible { outline: 1px dotted #000; outline-offset: -3px; }
+/* without JavaScript, hide controls that cannot work */
+html:not(.js) .start, html:not(.js) .title-bar-controls, html:not(.js) .tray time, html:not(.js) .tray svg { visibility: hidden; }
+/* bigger touch areas, same look */
+@media (pointer: coarse) {
+  .title-bar-controls button, .meta a, .tasks button { position: relative; }
+  .title-bar-controls button::after { content: ''; position: absolute; inset: -10px -4px; }
+  .meta a::after { content: ''; position: absolute; inset: -12px -2px; }
+  .tasks button { min-height: 24px; }
+  .tasks button::after { content: ''; position: absolute; inset: -4px 0; }
+}

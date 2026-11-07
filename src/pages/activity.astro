@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import Window from '../components/Window.astro';
+import Activity from '../components/Activity.astro';
+import { site } from '../data/profile';
+---
+<Base title="GitHub activity" description={`A year of ${site.name}'s commits on GitHub, as a calendar.`}>
+  <Window id="activity" title="GitHub Activity" icon="floppy" w={700} active heading menu={['File', 'View', 'Help']} status={['Rebuilt with every release', `github.com/${site.github}`]}>
+    <Activity />
+  </Window>
+</Base>

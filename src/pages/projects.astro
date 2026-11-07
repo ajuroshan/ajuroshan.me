@@ -9,9 +9,9 @@ const groups = ['University', 'Motorcycle', 'Tools'] as const;
 const gicon = (g: string) => (g === 'University' ? 'globe' : g === 'Motorcycle' ? 'flag' : 'wrench');
 const host = (u: string) => (u.startsWith('/') ? u : new URL(u).host);
 ---
-<Base title="Work" description={`What ${site.name} has built and runs: the software behind a university's admissions, hostels and mess bills; a motorcycle telemetry logger and dashboard; and small tools for his own desk.`}>
+<Base title="Work" description={`Things ${site.name} built: the software behind a university's admissions, hostel rooms and mess bills, gadgets for his motorcycle, and a few small tools.`}>
   <Window id="work" title="My Work" icon="computer" w={600} active heading menu={['File', 'Edit', 'View', 'Go', 'Help']} status={[`${projects.length} object(s)`]}>
-    <p class="body intro">The things worth showing. The rest is on <a href="https://github.com/ajuroshan">GitHub</a>.</p>
+    <p class="body intro">Stuff I built that people (or at least I) actually use. The half-finished ones live on <a href="https://github.com/ajuroshan">GitHub</a>.</p>
     <div class="sunken-panel">
       {groups.map((g) => (
         <div class="grp">
@@ -27,7 +27,7 @@ const host = (u: string) => (u.startsWith('/') ? u : new URL(u).host);
   </Window>
 
   {projects.map((p) => (
-    <Window id={p.slug} title={`${p.name} Properties`} icon={gicon(p.group)} w={720} deferred>
+    <Window id={p.slug} title={`${p.name} Properties`} icon={gicon(p.group)} w={720} deferred plain>
       <div class:list={['proj', { 'has-img': !!p.image }]}>
         <div class="body">
           <h2 class="ph">{p.name} <span class="ui">({p.kind}, {p.year})</span></h2>
@@ -67,6 +67,6 @@ const host = (u: string) => (u.startsWith('/') ? u : new URL(u).host);
   .facts dd, .tools dd { margin: 0; }
   .pic { margin: 0; align-self: start; background: #fff; padding: 2px; box-shadow: inset -1px -1px #fff, inset 1px 1px grey, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a; }
   .pic :global(img) { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; object-position: top; }
-  .pic figcaption { margin-top: 4px; }
+  .pic figcaption { margin-top: 4px; padding: 0 4px 2px; }
   @media (max-width: 700px) { .proj.has-img { grid-template-columns: 1fr; } .pic { order: -1; } }
 </style>

@@ -5,8 +5,8 @@ import Running from '../components/Running.astro';
 import { site, box } from '../data/profile';
 ---
 <Base title="Now" description={`What is running on ${box.host}, ${site.name}'s one small ARM server, right now: uptime, load, every service and when the morning brief last went out.`}>
-  <Window id="monitor" title="System Monitor" icon="monitor" w={580} active heading menu={['File', 'Options', 'View', 'Help']} status={['Live', 'Refreshes every minute']}>
-    <p class="body intro">One small free server runs everything I have online. This is it, right now.</p>
+  <Window id="monitor" title="System Monitor" icon="monitor" w={580} active heading menu={['File', 'Options', 'View', 'Help']} status={['Live', 'Please do not DDoS my mornings']}>
+    <p class="body intro">This is my one free server in Hyderabad. It runs my life a little more than it should. The numbers are real and update every minute.</p>
     <Running full />
   </Window>
 </Base>

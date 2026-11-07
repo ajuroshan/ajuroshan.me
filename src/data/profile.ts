@@ -15,8 +15,8 @@ export const site = {
   city: 'Kochi',
   country: 'India',
   description:
-    'Ajmal Roshan, an engineer in Kochi. Software a university runs on, gadgets for his motorcycle, and notes on keeping small systems running.',
-  tagline: 'Engineer in Kochi. Software a university runs on, gadgets for the bike, one small server for the rest.',
+    "Ajmal Roshan's corner of the internet. Backend code, a motorcycle with too many sensors, and one tiny server that runs his mornings.",
+  tagline: 'Backend code, a bike with too many sensors, and one tiny server that runs my mornings.',
 };
 
 export const box = {
@@ -28,10 +28,10 @@ export const box = {
 // What each thing on the box does, in my words. Keyed by the ids that status.json reports.
 // What the System Monitor shows. Only these ids are displayed, in this order; the rest of status.json is ignored.
 export const services: Record<string, { label: string; does: string }> = {
-  nginx: { label: 'web server', does: 'serves this site' },
-  'hermes-gateway': { label: 'assistant', does: 'my agent on Telegram' },
-  'habit-tracker': { label: 'habit tracker', does: 'the app I check every day' },
-  'morning-brief': { label: 'morning brief', does: 'one message at 07:00' },
+  nginx: { label: 'web server', does: 'serving you this page right now' },
+  'hermes-gateway': { label: 'my assistant', does: 'answers me on Telegram, mostly about my calendar' },
+  'habit-tracker': { label: 'habit tracker', does: 'quietly judging my gym attendance' },
+  'morning-brief': { label: 'morning brief', does: 'texts me my whole day at 7 am' },
 };
 
 export type Project = {
@@ -58,8 +58,8 @@ export const projects: Project[] = [
     year: 2024,
     group: 'University',
     url: 'https://fyugp.cusat.ac.in',
-    summary: 'Admissions for the integrated MSc programmes at CUSAT.',
-    body: 'It replaced paper forms in more than eight departments. Over ten thousand applications a year, most of them in the two weeks after results.',
+    summary: `The site ten thousand students fight with every admission season.`,
+    body: `This used to be paper forms in eight different departments. Now it's one site, and I'm the guy who gets the call when results drop and everyone logs in at the same minute.`,
     stack: ['Django', 'PostgreSQL', 'Docker'],
     image: admissions,
     imageAlt: 'The admissions site with the university crest and an Apply for Admission button',
@@ -71,8 +71,8 @@ export const projects: Project[] = [
     year: 2024,
     group: 'University',
     url: 'https://hostels.cusat.ac.in',
-    summary: 'Hostel seats for three thousand students, allotted by an algorithm instead of a spreadsheet.',
-    body: 'What took the hostel office weeks now takes one run, and wardens see the same numbers the office does.',
+    summary: `Decides who gets which hostel room. An algorithm does it now, not whoever reached the office first.`,
+    body: `Three thousand students, and distance from home decides who goes first. The wardens still argue, but at least they argue with the same numbers.`,
     stack: ['Django', 'PostgreSQL'],
     image: hostels,
     imageAlt: 'The Central Office for University Hostels site',
@@ -84,8 +84,8 @@ export const projects: Project[] = [
     year: 2024,
     group: 'University',
     repo: 'https://github.com/ajuroshan/messy',
-    summary: 'Meal check-ins and the monthly mess bill for about two thousand students.',
-    body: 'It started in one hostel and spread to the others because the wardens asked for it.',
+    summary: `Counts every meal in the hostel mess and sends the bill at the end of the month.`,
+    body: `I built it for my own hostel. Then the other hostels wanted it too, and that's how I ended up maintaining it.`,
     stack: ['Django', 'SQLite'],
   },
   {
@@ -95,8 +95,8 @@ export const projects: Project[] = [
     year: 2026,
     group: 'Motorcycle',
     repo: 'https://github.com/ajuroshan/rideloop',
-    summary: 'An ESP32 on the bike logs GPS and motion to an SD card and streams a live view to the phone on the bars.',
-    body: 'Logging comes first. If the phone drops off, the logger does not notice.',
+    summary: `A little ESP32 strapped to my bike that logs GPS, speed and lean angle.`,
+    body: `It keeps writing to the SD card even when my phone dies, which is the whole point. And yes, I check my lean angle after every ride.`,
     stack: ['C++', 'ESP32-S3'],
     image: esp32,
     imageAlt: 'An ESP32 development board, close up',
@@ -109,8 +109,8 @@ export const projects: Project[] = [
     year: 2026,
     group: 'Motorcycle',
     repo: 'https://github.com/ajuroshan/apexdash',
-    summary: 'A black-and-white Android dashboard: speed, lean angle and g-force on one screen.',
-    body: 'Its vibration filter has its own note: <a href="/blog/handlebar-vibration/">engine buzz on a handlebar phone</a>.',
+    summary: `Turns my phone into a dark, nerdy speedometer on the handlebars.`,
+    body: `It shows speed, lean and g-force. Engine buzz made the g-force numbers lie, so I wrote a filter, and <a href="/blog/handlebar-vibration/">here's that story</a>.`,
     stack: ['Android'],
     image: apex,
     imageAlt: 'The APEX dashboard: speed dial, lean angle of 15 degrees left, and a g-force circle',
@@ -122,8 +122,8 @@ export const projects: Project[] = [
     year: 2026,
     group: 'Tools',
     repo: 'https://github.com/ajuroshan/breaktime',
-    summary: 'A 300 KB Rust tray app that makes you look at something far away every twenty minutes.',
-    body: 'Every break shows a distant landscape whose sky follows your local time.',
+    summary: `A tiny Windows app that nags me to look away from the screen every twenty minutes.`,
+    body: `300 KB of Rust that shows me a far-away mountain so my eyes get a break. I hit Skip more often than I should.`,
     stack: ['Rust'],
   },
 ];

@@ -24,7 +24,7 @@ const ld = {
 const toc = headings.filter((h) => h.depth === 2);
 ---
 <Base title={post.data.title} description={post.data.description} type="article" image={`/og/${post.id}.png`} published={post.data.date} updated={post.data.updated} tags={post.data.tags} jsonld={ld}>
-  <Window id={`post-${post.id}`} title={`${post.id}.md - Notepad`} icon="doc" w={760} active heading={false} menu={['File', 'Edit', 'Search', 'Help']} status={[`${words} words · ${minutes} min read`, fmt(post.data.date), post.data.tags.join(', ')]}>
+  <Window id={`post-${post.id}`} title={`${post.id}.md - Notepad`} icon="doc" w={760} active plain menu={['File', 'Edit', 'Search', 'Help']} status={[`${words} words · ${minutes} min read`, fmt(post.data.date), post.data.tags.join(', ')]}>
     <article class="paper">
       <header class="head">
         <h1>{post.data.title}</h1>
@@ -43,7 +43,7 @@ const toc = headings.filter((h) => h.depth === 2);
       )}
       <div class="prose"><Content /></div>
       <footer class="foot">
-        <p class="ui">Written by <a href="/">{site.name}</a> in {site.city}. Spotted a mistake? <a href={`mailto:${site.email}?subject=${encodeURIComponent(`Re: ${post.data.title}`)}`}>Write to me</a> or <a href={`https://github.com/ajuroshan/ajuroshan.me/blob/main/src/content/blog/${post.id}.md`}>fix it on GitHub</a>.</p>
+        <p class="ui">Written by <a href="/">{site.name}</a> in {site.city}, probably too late at night. Found a mistake? <a href={`mailto:${site.email}?subject=${encodeURIComponent(`Re: ${post.data.title}`)}`}>Tell me</a> or <a href={`https://github.com/ajuroshan/ajuroshan.me/blob/main/src/content/blog/${post.id}.md`}>fix it yourself</a>.</p>
       </footer>
     </article>
     <div class="btns">

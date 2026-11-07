@@ -1,26 +1,30 @@
 ---
 title: Engine buzz on a handlebar phone
-description: A bar-mounted phone turns engine vibration into fake g-force peaks. A one-pole low pass fixes it, and the rejected energy turns out to be a useful number.
+description: My bike dashboard said I was pulling 3 g under braking. I was not. Here's how engine vibration lies to a phone, and the tiny filter that fixed it.
 date: 2026-08-20
 tags: [motorcycle, sensors, android, apex]
 ---
 
-[APEX](https://github.com/ajuroshan/apexdash) is a monochrome dashboard for a phone on a motorcycle's handlebars: speed, lean angle and g-force on one black screen. The g-force readout keeps the peak values of a ride, and in the first version the peaks were nonsense. Three g of braking on a road where I had barely touched the lever.
+[APEX](https://github.com/ajuroshan/apexdash) is the dashboard app I run on a phone clipped to my handlebars. It shows speed, how far I'm leaning, and g-force, and it remembers the biggest numbers from each ride.
 
-## Where it comes from
+After the first real ride it told me I'd hit 3 g under braking. For reference, that's about what a fighter pilot complains about. I had barely touched the brake.
 
-A bar mount is rigid, which is what you want for the screen, and it passes engine and road buzz straight into the phone's accelerometer. That energy sits far above the frequency of anything a rider actually does; braking and cornering build over a few tenths of a second. But the sensor samples at about 50 Hz, so the buzz aliases down into the band where real riding forces live. Most samples are fine. One is a spike. The peak figures are latched maxima, so one spike ruins the peak g for the whole ride.
+## What was going on
 
-## The filter
+The phone mount is solid, which is good for reading the screen and bad for everything else. Every bit of engine buzz goes straight into the phone's motion sensor.
 
-A one-pole low pass on each axis:
+Real riding forces are slow. Braking or leaning into a corner builds up over a few tenths of a second. Engine buzz is fast, way faster than the sensor can sample properly, so it sneaks in as random spikes. Most readings are fine. Then one spike gets through, and since the app keeps the peak value, that one spike becomes my "best" braking for the whole ride.
+
+## The fix
+
+A really simple low-pass filter on each axis:
 
 ```kotlin
 y += alpha * (x - y)   // alpha = dt / (tau + dt)
 ```
 
-With a time constant of a few hundred milliseconds, braking and cornering pass through almost untouched and the buzz is gone. `tau` is a setting, because a big twin and a thumper do not buzz alike, and neither do two mounts.
+It smooths out anything fast and lets the slow stuff through. Braking and cornering come through almost untouched, and the buzz disappears. How much it smooths is a setting, because a big twin and a single-cylinder bike buzz very differently.
 
-## Keep what you throw away
+## The bonus
 
-The rejected part of the signal, `x - y`, is not noise to discard. Its RMS is the vibration the phone is actually seeing, in g. APEX shows it as VIBRATION on the telemetry panel. It tells you how rough the mount is, and it changes noticeably when a bolt works loose. That number came free with the filter, and it is the one I look at first after changing anything on the bars.
+The bit the filter throws away, `x - y`, turned out to be useful too. That's the vibration the phone is actually feeling. APEX now shows it as VIBRATION on the telemetry screen, and it jumps when a mount bolt starts working loose. I check it every time I fiddle with the handlebars.

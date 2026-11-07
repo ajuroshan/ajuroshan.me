@@ -15,7 +15,7 @@ const icons = [
   { href: '/now/', label: 'System Monitor', icon: 'monitor' },
   { href: '/#welcome', label: 'README.txt', icon: 'doc' },
   { href: `mailto:${site.email}`, label: 'Send Mail', icon: 'mail' },
-  { href: `https://github.com/${site.github}`, label: 'GitHub', icon: 'floppy' },
+  { href: '/activity/', label: 'GitHub Activity', icon: 'floppy' },
   { href: 'https://github.com/ajuroshan/ajuroshan.me/releases/tag/v0.4.0', label: 'Old site', icon: 'bin' },
 ];
 const menu = [
@@ -23,6 +23,7 @@ const menu = [
   { href: '/blog/', label: 'Notes', icon: 'folder' },
   { href: '/projects/', label: 'My Work', icon: 'computer' },
   { href: '/now/', label: 'System Monitor', icon: 'monitor' },
+  { href: '/activity/', label: 'GitHub Activity', icon: 'floppy' },
   { sep: true },
   { href: `mailto:${site.email}`, label: 'Send mail', icon: 'mail' },
   { href: `https://github.com/${site.github}`, label: 'GitHub', icon: 'floppy' },
@@ -85,6 +86,8 @@ const menu = [
       function focus(w: HTMLElement) {
         wins().forEach((x) => x.classList.toggle('active', x === w));
         w.style.zIndex = String(++z);
+        if (w.dataset.docTitle) document.title = w.dataset.docTitle;
+        if (w.dataset.docUrl && w.dataset.docUrl !== location.pathname + location.hash && !phone()) history.replaceState(null, '', w.dataset.docUrl);
         sync();
       }
       function topmost() {
@@ -96,15 +99,17 @@ const menu = [
         const ww = Math.min(w.offsetWidth || 520, dw - 16);
         let x = parseFloat(w.style.getPropertyValue('--x'));
         let y = parseFloat(w.style.getPropertyValue('--y'));
+        if (!w.dataset.moved && dw < 1180) { x = NaN; }   // the fixed layout needs a wide screen; cascade instead
         if (Number.isNaN(x) || Number.isNaN(y)) {
           const n = cascade++ % 8;
-          x = Math.round((dw - ww) / 2) - 60 + n * 28;
+          x = (dw >= 1180 ? Math.round((dw - ww) / 2) - 60 : 104) + n * 28;
           y = 16 + n * 28;
         }
         x = Math.max(8, Math.min(x, dw - ww - 8));
         y = Math.max(8, Math.min(y, dh - 140));
         w.style.setProperty('--x', `${x}px`);
         w.style.setProperty('--y', `${y}px`);
+        w.dataset.placed = '1';
       }
       function setMax(w: HTMLElement, on: boolean) {
         w.classList.toggle('max', on);
@@ -114,7 +119,8 @@ const menu = [
       function open(w: HTMLElement, fresh = false) {
         w.classList.remove('min', 'closed');
         w.classList.add('opened');
-        if (fresh) { place(w); if (phone()) setMax(w, true); }
+        if (fresh || !w.dataset.placed) place(w);
+        if (fresh && phone()) setMax(w, true);
         focus(w);
         if (phone() && !w.classList.contains('max')) w.scrollIntoView({ block: 'start', behavior: 'smooth' });
       }
@@ -127,8 +133,10 @@ const menu = [
         w.classList.add('closed');
         w.classList.remove('active', 'opened');
         setMax(w, false);
+        const hadFocus = w.contains(document.activeElement);
         if (w.dataset.dynamic) { buttons.get(w)?.remove(); buttons.delete(w); w.remove(); }
         const t = topmost(); if (t) focus(t); else sync();
+        if (hadFocus) (t && buttons.get(t) ? buttons.get(t)! : document.querySelector<HTMLElement>('[data-start]')!).focus();
       }
 
       function register(w: HTMLElement) {
@@ -156,7 +164,7 @@ const menu = [
           const move = (ev: PointerEvent) => {
             const x = Math.max(-r.width + 80, Math.min(ev.clientX - dx - p.left, p.width - 80));
             const y = Math.max(0, Math.min(ev.clientY - dy - p.top, p.height - 30));
-            w.style.setProperty('--x', `${x}px`); w.style.setProperty('--y', `${y}px`);
+            w.style.setProperty('--x', `${x}px`); w.style.setProperty('--y', `${y}px`); w.dataset.moved = '1';
           };
           const up = () => { removeEventListener('pointermove', move); removeEventListener('pointerup', up); document.body.classList.remove('dragging'); };
           addEventListener('pointermove', move); addEventListener('pointerup', up);
@@ -185,10 +193,10 @@ const menu = [
       async function openUrl(u: URL, push: boolean) {
         const key = decodeURIComponent(u.hash.slice(1));
         const byId = key ? document.getElementById(key) : null;
-        if (byId?.matches('[data-win]')) { open(byId); if (push) history.pushState(null, '', u.href); return; }
+        if (byId?.matches('[data-win]')) { if (push) history.pushState(null, '', u.href); open(byId); return; }
         if (!key) {
-          const mine = wins().filter((w) => w.dataset.page === u.pathname && !w.hasAttribute('data-deferred'));
-          if (mine.length) { mine.forEach((w) => open(w)); if (push) history.pushState(null, '', u.href); return; }
+          const mine = wins().filter((w) => (w.dataset.docUrl === u.pathname || w.dataset.page === u.pathname) && !w.hasAttribute('data-deferred'));
+          if (mine.length) { if (push) history.pushState(null, '', u.href); mine.forEach((w) => open(w)); return; }
         }
         document.body.classList.add('busy');
         try {
@@ -198,18 +206,19 @@ const menu = [
           const one = key ? doc.getElementById(key) : null;
           src = one?.matches('[data-win]') ? [one as HTMLElement] : src.filter((w) => !w.hasAttribute('data-deferred'));
           if (!src.length) { location.href = u.href; return; }
+          if (push) history.pushState(null, '', u.href);
           for (const s of src) {
             const have = document.getElementById(s.id);
             if (have?.matches('[data-win]')) { open(have); continue; }
             const w = document.importNode(s, true) as HTMLElement;
             w.dataset.dynamic = '1';
+            w.dataset.docTitle = doc.title;
+            w.dataset.docUrl = u.pathname + (one ? `#${key}` : '');
             w.style.removeProperty('--x'); w.style.removeProperty('--y');
             desk.appendChild(w);
             register(w);
             open(w, true);
           }
-          document.title = doc.title;
-          if (push) history.pushState(null, '', u.href);
           refreshStatus();
         } catch {
           location.href = u.href;
@@ -239,11 +248,20 @@ const menu = [
 
       // first paint: register what the page rendered, open the deferred window named in the hash
       cascade = 0;
+      for (const w of wins()) {
+        w.dataset.docTitle = document.title;
+        w.dataset.docUrl = location.pathname + (w.hasAttribute('data-deferred') ? `#${w.id}` : '');
+      }
       for (const w of wins()) { register(w); if (!w.hasAttribute('data-deferred')) { w.classList.add('opened'); place(w); } }
       const hashWin = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
       if (hashWin && hashWin.matches('[data-win]')) open(hashWin, true);
       else { const first = wins().find((w) => w.classList.contains('active')) ?? wins().find(visible); if (first) focus(first); }
       addEventListener('resize', () => wins().filter(visible).forEach(place));
+      // a same-page link to a window (phones use real links, so this is how they open project sheets)
+      addEventListener('hashchange', () => {
+        const w = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+        if (w?.matches('[data-win]')) open(w, true);
+      });
 
       // start menu
       const start = document.querySelector<HTMLButtonElement>('[data-start]')!;
@@ -254,6 +272,14 @@ const menu = [
         if (on) sm.querySelector<HTMLElement>('a')?.focus();
       }
       start.addEventListener('click', (e) => { e.stopPropagation(); setMenu(!sm.classList.contains('open')); });
+      sm.addEventListener('focusout', (e) => { if (!sm.contains(e.relatedTarget as Node) && e.relatedTarget !== start) setMenu(false); });
+      sm.addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+        const items = [...sm.querySelectorAll<HTMLElement>('a')];
+        const i = items.indexOf(document.activeElement as HTMLElement);
+        items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
+        e.preventDefault();
+      });
       document.addEventListener('click', (e) => { if (!sm.contains(e.target as Node) && e.target !== start) setMenu(false); });
       document.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape') return;
@@ -280,6 +306,7 @@ const menu = [
           const r = await fetch('/status.json', { cache: 'no-store' });
           if (!r.ok) return;
           const s = await r.json();
+          if (!s || !Array.isArray(s.services) || !Number.isFinite(s.uptime_s) || !Array.isArray(s.load) || Number.isNaN(Date.parse(s.generated))) return;
           const now = new Date(s.generated);
           for (const root of roots) {
             const set = (sel: string, v: string) => root.querySelectorAll(sel).forEach((el) => (el.textContent = v));
@@ -303,6 +330,8 @@ const menu = [
       }
       refreshStatus();
       setInterval(refreshStatus, 60_000);
+      const toEnd = () => document.querySelectorAll<HTMLElement>('[data-scroll-end]').forEach((el) => { if (!el.dataset.done) { el.scrollLeft = el.scrollWidth; el.dataset.done = '1'; } });
+      toEnd(); new MutationObserver(toEnd).observe(desk, { childList: true });
     </script>
   </body>
 </html>

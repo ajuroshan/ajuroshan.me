@@ -1,38 +1,42 @@
 ---
 title: The model answered with nothing
-description: A morning-brief script that worked for weeks started returning empty replies. The reasoning tokens had eaten the whole output budget.
+description: My morning brief showed up empty one day. Turns out the AI spent its whole word budget thinking and had nothing left to say.
 date: 2026-11-06
 tags: [llm, openrouter, python, debugging]
 ---
 
-Every morning at seven a script on my server gathers the day (calendar, unread mail, the WhatsApp threads that need a reply, the habits I missed) and asks a model to pick the three things that matter. The result goes to Telegram as one message. It had worked for weeks. Then one morning the message arrived with the headings and no content.
+Every morning at 7 a little script on my server reads my calendar, my mail and my habits, asks an AI what actually matters today, and texts me the answer on Telegram. It's the first thing I read when I wake up. It had worked for weeks.
+
+Then one morning it sent me the headings and nothing under them. Just a very confident, very empty message.
 
 ## What the log said
 
-The HTTP call succeeded. The JSON parsed. The `content` field was an empty string. The only hint was in the usage block:
+Nothing had crashed. The request went through, the reply parsed fine, and the answer was an empty string. The only clue was in the usage numbers:
 
 ```json
-"usage": { "prompt_tokens": 2140, "completion_tokens": 900, "completion_tokens_details": { "reasoning_tokens": 900 } }
+"usage": { "completion_tokens": 900, "completion_tokens_details": { "reasoning_tokens": 900 } }
 ```
 
-The request set `max_tokens: 900`. The model I had switched to a few days earlier reasons before it answers, and its reasoning counts against the same budget as the answer. It thought for nine hundred tokens, hit the ceiling, and returned the answer it had not started yet.
+I'd capped the reply at 900 tokens. A few days earlier I had switched to a newer model, one that thinks before it answers, and that thinking comes out of the same 900. It thought for all 900 tokens, ran out, and handed me what it had written so far, which was nothing.
+
+Honestly? Relatable.
 
 ## The fix
 
-Two changes. First, give it room:
+Two lines. Give it more room:
 
 ```python
 "max_tokens": 6000,
 ```
 
-Second, tell it how much to think. OpenRouter passes a `reasoning` object through to the models that support it:
+And tell it not to overthink:
 
 ```python
 "reasoning": {"effort": "low"},
 ```
 
-With low effort the model spends a hundred or two tokens reasoning and the rest on the answer. The brief itself is short, so the total cost barely moved, and it has not come back empty since.
+Now it thinks for a couple of hundred tokens and spends the rest actually telling me about my day. The cost barely moved, and the brief hasn't been empty since.
 
-## The lesson
+## What I took away
 
-When you change models, re-read the usage block on the first call. A reasoning model is a different contract: the output budget is shared, and a response can be well-formed and empty at the same time. I now log `reasoning_tokens` next to `completion_tokens` on every call, and the script retries once with a bigger budget if the content comes back blank.
+If you swap models, look at the token usage on the first reply, not just whether it worked. A thinking model plays by different rules: the reply can be perfectly valid and still say nothing. The script now logs the thinking tokens too, and retries once with more room if it ever comes back blank.

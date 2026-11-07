@@ -16,6 +16,7 @@ export async function GET(context: APIContext) {
       link: `/blog/${p.id}/`,
       categories: p.data.tags,
     })),
-    customData: `<language>en</language><managingEditor>${site.email} (${site.name})</managingEditor>`,
+    xmlns: { atom: 'http://www.w3.org/2005/Atom' },
+    customData: `<atom:link href="${new URL('/rss.xml', context.site)}" rel="self" type="application/rss+xml"/><language>en</language><managingEditor>${site.email} (${site.name})</managingEditor>`,
   });
 }

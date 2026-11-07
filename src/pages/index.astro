@@ -5,38 +5,40 @@ import Window from '../components/Window.astro';
 import Icon from '../components/Icon.astro';
 import Running from '../components/Running.astro';
 import NotesList from '../components/NotesList.astro';
+import Activity from '../components/Activity.astro';
 import { site, projects } from '../data/profile';
 import portrait from '../assets/img/ajmal.png';
 
 ---
 <Base title={site.name} description={site.description} home>
-  <Window id="welcome" title="Welcome" icon="info" x={112} y={16} w={560} active heading={false}>
+  <Window id="welcome" title="Welcome" icon="info" x={112} y={16} w={560} active plain>
     <div class="welcome">
       <figure class="portrait">
         <Image src={portrait} width={120} height={120} alt="Ajmal Roshan, black and white" loading="eager" />
       </figure>
       <div class="body">
         <h1 class="h1">Ajmal Roshan</h1>
-        <p class="sub"><b>Engineer in Kochi, India.</b></p>
-        <p>I build the software a university runs on, gadgets for my motorcycle, and small tools for myself. By day I make iOS apps at Lascade.</p>
-        <p>Have a look around. Everything here opens in a window.</p>
+        <p class="sub"><b>Engineer. Kochi. Usually on a motorcycle.</b></p>
+        <p>Hi! I write backend code, break servers, and fix them before anyone notices. Some of my code runs a university's admissions, which is terrifying every results day.</p>
+        <p>These days I build things at <a href="https://althio.ai">Althio</a>. Before that it was iOS apps at Lascade, and before that, far too many college fest websites.</p>
+        <p>Poke around. Everything opens in a window, and yes, you can drag them.</p>
       </div>
     </div>
     <div class="welcome-foot">
-      <input type="checkbox" id="again" checked /><label for="again">Show this window each time ajmalroshan.dev starts</label>
+      <input type="checkbox" id="again" checked data-again /><label for="again">Show this every time (it will anyway)</label>
       <div class="btns">
-        <a class="default" href="/blog/">Read the notes</a>
-        <a href="/projects/">See the work</a>
-        <a href={`mailto:${site.email}`}>Write to me</a>
+        <a class="default" href="/blog/">Read my notes</a>
+        <a href="/projects/">See my stuff</a>
+        <a href={`mailto:${site.email}`}>Say hi</a>
       </div>
     </div>
   </Window>
 
-  <Window id="notes" title="Notes" icon="folder" x={720} y={16} w={600} menu={['File', 'Edit', 'View', 'Help']}>
+  <Window id="notes" title="Notes" icon="folder" x={690} y={16} w={540} menu={['File', 'Edit', 'View', 'Help']}>
     <NotesList />
   </Window>
 
-  <Window id="work" title="My Work" icon="computer" x={720} y={250} w={600} menu={['File', 'Edit', 'View', 'Help']} status={[`${projects.length} object(s)`]}>
+  <Window id="work" title="My Work" icon="computer" x={690} y={250} w={540} menu={['File', 'Edit', 'View', 'Help']} status={[`${projects.length} object(s)`]}>
     <div class="iconsgrid">
       {projects.map((p) => (
         <a class="icon" href={`/projects/#${p.slug}`}><Icon name={p.group === 'University' ? 'globe' : p.group === 'Motorcycle' ? 'flag' : 'wrench'} size={32} /><span>{p.name}</span></a>
@@ -44,10 +46,29 @@ import portrait from '../assets/img/ajmal.png';
     </div>
   </Window>
 
-  <Window id="monitor" title="System Monitor" icon="monitor" x={120} y={300} w={580} menu={['File', 'Options', 'View', 'Help']} status={['Live from arm-free-01']}>
+  <Window id="monitor" title="System Monitor" icon="monitor" x={112} y={350} w={560} menu={['File', 'Options', 'View', 'Help']} status={['Live from a free server in Hyderabad']}>
     <Running full />
   </Window>
+
+  <Window id="activity" title="GitHub Activity" icon="floppy" x={690} y={540} w={700} status={['Rebuilt with every release']}>
+    <Activity />
+  </Window>
 </Base>
+
+<script>
+  // The welcome checkbox actually works: untick it and Welcome starts minimised next time.
+  const box = document.querySelector<HTMLInputElement>('[data-again]');
+  const KEY = 'welcome-hidden';
+  try {
+    if (box) {
+      if (localStorage.getItem(KEY) === '1') {
+        box.checked = false;
+        if (!location.hash) document.querySelector<HTMLElement>('#welcome [data-min]')?.click();
+      }
+      box.addEventListener('change', () => { try { box.checked ? localStorage.removeItem(KEY) : localStorage.setItem(KEY, '1'); } catch {} });
+    }
+  } catch {}
+</script>
 
 <style>
   .welcome { display: grid; grid-template-columns: 120px 1fr; gap: 14px; align-items: start; }

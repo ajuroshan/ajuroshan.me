@@ -34,8 +34,7 @@ const ld = jsonld ?? { '@context': 'https://schema.org', ...person };
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>{fullTitle}</title>
 <meta name="description" content={description} />
-<link rel="canonical" href={canonical} />
-{noindex && <meta name="robots" content="noindex" />}
+{noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
 <meta name="theme-color" content="#008080" />
 <meta name="color-scheme" content="light" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
