@@ -1,0 +1,20 @@
+---
+import Base from '../layouts/Base.astro';
+import Window from '../components/Window.astro';
+import Running from '../components/Running.astro';
+import { site, box } from '../data/profile';
+---
+<Base title="Now" description={`What is running on ${box.host}, ${site.name}'s one small ARM server, right now: uptime, load, every service and when the morning brief last went out.`}>
+  <Window id="now" title="System Monitor — arm-free-01" icon="monitor" w={820} active heading menu={['File', 'Options', 'View', 'Help']} status={['Live', 'Refreshes every minute']}>
+    <p class="body intro">One machine runs everything I have on the internet. This is what it is doing right now, read from the machine itself.</p>
+    <Running full />
+  </Window>
+  <Window id="how" title="How this page works" icon="info" w={820} task={false} status={['Help']}>
+    <div class="body">
+      <p>A systemd timer on the box runs a short shell script every minute. It asks systemd and Docker about each service, reads uptime, load, memory and disk, and writes a small JSON file that nginx serves at <a href="/status.json">/status.json</a>.</p>
+      <p>When this site is built, the build fetches that file so the page already carries real numbers. In the browser a few lines of script re-read it every minute. If the box is down, the page stays up, because the page is static and the box is only its origin behind Cloudflare's cache.</p>
+      <p>The machine: {box.spec}, in {box.place}.</p>
+    </div>
+  </Window>
+</Base>
+<style>.intro { margin-bottom: 8px; }</style>

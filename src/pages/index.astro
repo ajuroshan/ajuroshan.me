@@ -1,224 +1,94 @@
 ---
-import Base from '../layouts/Base.astro';
-import Figure1 from '../components/Figure1.astro';
+import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
-import { profile, stats, experience, projects, capabilities } from '../data/profile';
+import Base from '../layouts/Base.astro';
+import Window from '../components/Window.astro';
+import Icon from '../components/Icon.astro';
+import Running from '../components/Running.astro';
+import { site, projects } from '../data/profile';
+import portrait from '../assets/img/ajmal.png';
 
-const posts = (await getCollection('blog', ({ data }) => !data.draft))
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-  .slice(0, 4);
-const prod = projects.filter((p) => p.kind === 'prod');
-const other = projects.filter((p) => p.kind !== 'prod');
-const host = (u: string) => new URL(u).host;
-const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf()).slice(0, 5);
+const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const uni = projects.filter((p) => p.group === 'University');
+const icons = [
+  { href: '/projects/', label: 'My Work', icon: 'computer' },
+  { href: '/blog/', label: 'Notes', icon: 'folder' },
+  { href: '/now/', label: 'System Monitor', icon: 'monitor' },
+  { href: '#welcome', label: 'README.txt', icon: 'doc', open: 'welcome' },
+  { href: `mailto:${site.email}`, label: 'Send Mail', icon: 'mail' },
+  { href: `https://github.com/${site.github}`, label: 'GitHub', icon: 'floppy' },
+  { href: 'https://github.com/ajuroshan/ajuroshan.me/releases/tag/v0.4.0', label: 'Recycle Bin', icon: 'bin' },
+];
 ---
-<Base>
-  <div class="wrap">
-    <!-- lead story -->
-    <section class="lead">
-      <article class="lead-story">
-        <p class="kicker">{profile.role}</p>
-        <h2 class="headline inked">Builds the software a university runs on, then keeps it running.</h2>
-        <p class="deck"><i>Admissions for ten thousand applicants a year, hostel seats for three thousand students, and the bill for every meal in between.</i></p>
-        <div class="cols">
-          <p class="dropcap">
-            I like owning a system end to end: modelling the data, writing the API, putting it
-            behind a load balancer, and being the one who gets paged when it breaks. Most of what I
-            have built started as a paper process at Cochin University of Science and Technology and
-            ended as software that departments now depend on.
-          </p>
-          <p>
-            The admissions platform replaced forms across more than eight departments. Hostel seats
-            are allotted by a location-priority algorithm instead of a spreadsheet. The mess bills
-            itself at the end of every month. Most of it is Django behind Nginx, on PostgreSQL or
-            SQLite, shipped in Docker containers.
-          </p>
-          <p>
-            I am completing a {profile.education.degree} at CUSAT ({profile.education.year}) and work on
-            native iOS apps at Lascade Co. I am open to backend, platform and DevOps roles.
-          </p>
-        </div>
-      </article>
+<Base title={site.name} description={site.description} home>
+  <nav class="icons" aria-label="Desktop">
+    {icons.map((i) => (
+      <a class="icon" href={i.href} data-open={i.open}><Icon name={i.icon} size={32} /><span>{i.label}</span></a>
+    ))}
+  </nav>
 
-      <aside class="numbers" aria-label="By the numbers">
-        <p class="box-title sc">By the numbers</p>
-        <dl>
-          {stats.map((s) => (
-            <div class="num-row">
-              <dd class="big inked">{s.value}</dd>
-              <dt>{s.label}</dt>
-            </div>
-          ))}
-        </dl>
-        <p class="box-foot mono">Figures are approximate, regular use.</p>
-      </aside>
-    </section>
-
-    <!-- production systems -->
-    <section class="section" id="work">
-      <header class="section-title">
-        <h2>In production</h2>
-        <a href="/projects/" class="sc">Full index of work →</a>
-      </header>
-      <div class="stories">
-        {prod.map((p) => (
-          <article class="story">
-            <p class="kicker">{p.metric}</p>
-            <h3 class="story-h">{p.title}</h3>
-            <p>{p.desc}</p>
-            <p class="byline"><i>{p.stack.join(', ')}</i>{p.url && <> · <a href={p.url}>{host(p.url)}</a></>}</p>
-          </article>
-        ))}
+  <Window id="welcome" title="Welcome" icon="info" x={120} y={30} w={560} active heading={false}>
+    <div class="welcome">
+      <figure class="portrait">
+        <Image src={portrait} width={120} height={120} alt="Ajmal Roshan, black and white" loading="eager" />
+      </figure>
+      <div class="body">
+        <h1 class="h1">Ajmal Roshan</h1>
+        <p class="sub"><b>Engineer in Kochi, India.</b> I write the software a university runs on, strap sensors to my motorcycle, and keep one small ARM server doing my chores every morning.</p>
+        <p>Most of what I have built began as a paper process at Cochin University of Science and Technology and ended as software people depend on: admissions for ten thousand applicants a year, hostel seats for three thousand students, the bill for every meal in between. I like owning a system end to end, from the schema to the box it runs on to the pager when it breaks.</p>
+        <p>By day I build iOS apps at Lascade. The rest is on this desktop: the <a href="/projects/">work</a>, the <a href="/blog/">notes</a>, and <a href="/now/">what the server is doing right now</a>.</p>
       </div>
-      <Figure1 />
-    </section>
-
-    <div class="two">
-      <!-- experience -->
-      <section class="section" id="experience">
-        <header class="section-title"><h2>Experience</h2></header>
-        {experience.map((e) => (
-          <article class="job">
-            <p class="kicker">{e.from} – {e.to}</p>
-            <h3 class="job-h">{e.role}, <i>{e.org}</i></h3>
-            <ul>{e.notes.map((n) => <li>{n}</li>)}</ul>
-          </article>
-        ))}
-      </section>
-
-      <!-- notes -->
-      <section class="section" id="notes">
-        <header class="section-title"><h2>Notes</h2><a href="/blog/" class="sc">All →</a></header>
-        <ol class="notes">
-          {posts.map((p) => (
-            <li>
-              <time class="kicker" datetime={p.data.date.toISOString()}>{fmt(p.data.date)}</time>
-              <a href={`/blog/${p.id}/`} class="note-h">{p.data.title}</a>
-              <p class="muted">{p.data.description}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
     </div>
-
-    <!-- other work -->
-    <section class="section">
-      <header class="section-title"><h2>Also on the desk</h2></header>
-      <div class="briefs">
-        {other.map((p) => (
-          <article>
-            <h3 class="brief-h">{p.title}</h3>
-            <p>{p.desc}</p>
-            {p.repo && <p class="mono"><a href={p.repo}>{p.repo.replace('https://github.com/', '')}</a></p>}
-          </article>
-        ))}
+    <div class="welcome-foot">
+      <input type="checkbox" id="again" checked /><label for="again">Show this window each time ajmalroshan.dev starts</label>
+      <div class="btns">
+        <a class="default" href="/blog/">Read the notes</a>
+        <a href="/projects/">See the work</a>
+        <a href={`mailto:${site.email}`}>Write to me</a>
       </div>
-    </section>
+    </div>
+  </Window>
 
-    <!-- tools -->
-    <section class="section">
-      <header class="section-title"><h2>Tools of the trade</h2></header>
-      <dl class="tools">
-        {capabilities.map((c) => (
-          <div>
-            <dt class="sc">{c.title}</dt>
-            <dd>{c.tools.join(' · ')}</dd>
-          </div>
-        ))}
-      </dl>
-    </section>
+  <Window id="notes" title="Notes" icon="folder" x={720} y={20} w={600} menu={['File', 'Edit', 'View', 'Help']} status={[`${posts.length} object(s)`, 'ajmalroshan.dev']}>
+    <div class="sunken-panel">
+      <table class="list interactive">
+        <thead><tr><th>Name</th><th>Modified</th><th>Tags</th></tr></thead>
+        <tbody>
+          {posts.map((p) => (
+            <tr>
+              <td><a class="rowicon" href={`/blog/${p.id}/`}><Icon name="doc" size={16} />{p.data.title}</a></td>
+              <td class="nowrap">{fmt(p.data.date)}</td>
+              <td>{p.data.tags.join(', ')}</td>
+            </tr>
+          ))}
+          <tr><td><a class="rowicon" href="/blog/"><Icon name="folder" size={16} />All notes…</a></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </Window>
 
-    <!-- contact coupon -->
-    <section class="section" id="contact">
-      <div class="coupon">
-        <span class="scissors" aria-hidden="true">✂</span>
-        <p class="kicker">Correspondence</p>
-        <h2 class="coupon-h inked misreg">Write to me.</h2>
-        <p>For backend, platform and DevOps work, or to ask about any of the systems above.</p>
-        <p class="coupon-line"><a href={`mailto:${profile.email}`}>{profile.email}</a></p>
-        <p class="mono coupon-alt">
-          <a href="https://github.com/ajuroshan">github.com/ajuroshan</a> · <a href="https://linkedin.com/in/ajuroshan">linkedin.com/in/ajuroshan</a>
-        </p>
-      </div>
-    </section>
-  </div>
+  <Window id="work" title="My Work" icon="computer" x={720} y={270} w={600} menu={['File', 'Edit', 'View', 'Help']} status={[`${projects.length} object(s)`, 'Double-click to open']}>
+    <div class="iconsgrid">
+      {projects.map((p) => (
+        <a class="icon" href={`/projects/#${p.slug}`}><Icon name={p.group === 'University' ? 'globe' : p.group === 'Motorcycle' ? 'flag' : 'wrench'} size={32} /><span>{p.name}</span></a>
+      ))}
+    </div>
+  </Window>
+
+  <Window id="monitor" title="System Monitor — arm-free-01" icon="monitor" x={120} y={450} w={580} menu={['File', 'Options', 'View', 'Help']} status={['Live', `${uni.length} university systems elsewhere`]}>
+    <Running />
+    <div class="btns"><a href="/now/">Details</a></div>
+  </Window>
 </Base>
 
 <style>
-  /* lead */
-  .lead { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 40px; padding-top: 36px; }
-  .headline { font-size: clamp(34px, 4.6vw, 58px); letter-spacing: -0.025em; line-height: 1.02; margin: 10px 0 14px; font-variation-settings: 'opsz' 60; }
-  .deck { font-size: 1.15em; color: var(--ink-2); margin-bottom: 22px; line-height: 1.4; }
-  .cols { columns: 2 300px; column-gap: 36px; column-rule: 1px solid rgba(34, 31, 27, 0.35); }
-  .cols p { margin-bottom: 0.8em; hyphens: auto; -webkit-hyphens: auto; text-align: justify; }
-
-  .numbers { border-left: 1px solid var(--ink); padding-left: 28px; align-self: start; }
-  .box-title { font-weight: 600; padding-bottom: 6px; border-bottom: 3px solid var(--ink); margin-bottom: 4px; }
-  .num-row { padding: 14px 0 12px; border-bottom: 1px solid rgba(34, 31, 27, 0.35); }
-  .num-row dd { margin: 0; }
-  .big { font-size: 52px; line-height: 0.95; font-weight: 700; color: var(--spot); letter-spacing: -0.03em; font-variant-numeric: lining-nums; }
-  .num-row dt { font-size: 15px; line-height: 1.35; color: var(--ink-2); margin-top: 4px; }
-  .box-foot { margin-top: 10px; font-size: 11px; color: var(--muted); }
-
-  /* stories */
-  .stories { display: grid; grid-template-columns: repeat(4, 1fr); }
-  .story { padding: 0 22px; border-left: 1px solid rgba(34, 31, 27, 0.35); display: flex; flex-direction: column; gap: 10px; }
-  .story:first-child { padding-left: 0; border-left: 0; }
-  .story:last-child { padding-right: 0; }
-  .story-h { font-size: 24px; letter-spacing: -0.015em; line-height: 1.1; }
-  .story p { font-size: 17px; line-height: 1.5; }
-  .byline { font-size: 15px !important; color: var(--ink-2); margin-top: auto !important; padding-top: 6px; }
-
-  /* two-up */
-  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
-  .job { margin-bottom: 26px; }
-  .job-h { font-size: 24px; letter-spacing: -0.01em; margin: 6px 0 8px; font-weight: 600; }
-  .job ul { padding-left: 1.1em; list-style: square; }
-  .job li { margin-bottom: 6px; }
-  .job li::marker { color: var(--spot); }
-  .notes li { padding-bottom: 18px; margin-bottom: 18px; border-bottom: 1px solid rgba(34, 31, 27, 0.35); }
-  .note-h { display: block; font-size: 23px; font-weight: 600; line-height: 1.15; color: var(--ink); text-decoration: none; margin: 6px 0 6px; }
-  .note-h:hover { color: var(--spot-ink); }
-
-  /* briefs */
-  .briefs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
-  .briefs article { padding: 0 22px; border-left: 1px solid rgba(34, 31, 27, 0.35); }
-  .briefs article:first-child { padding-left: 0; border-left: 0; }
-  .brief-h { font-size: 20px; margin-bottom: 6px; }
-  .briefs p { font-size: 16px; line-height: 1.5; }
-  .briefs .mono { margin-top: 8px; font-size: 12px; }
-
-  /* tools */
-  .tools { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px 32px; margin: 0; }
-  .tools dt { font-weight: 600; font-size: 1.05em; border-bottom: 1px solid var(--ink); padding-bottom: 4px; margin-bottom: 8px; }
-  .tools dd { margin: 0; color: var(--ink-2); font-size: 17px; }
-
-  /* coupon */
-  .coupon {
-    position: relative; max-width: 640px; margin: 8px auto 0; padding: 32px 36px 30px;
-    border: 2px dashed var(--ink); text-align: center; background: rgba(255, 252, 244, 0.35);
-  }
-  .scissors { position: absolute; top: -0.85em; left: 28px; background: var(--paper); padding: 0 8px; font-size: 22px; color: var(--ink); }
-  .coupon-h { font-size: clamp(40px, 6vw, 64px); margin: 8px 0 12px; letter-spacing: -0.03em; }
-  .coupon-line { margin-top: 18px; font-size: 1.35em; font-weight: 600; }
-  .coupon-line a { color: var(--ink); text-decoration-color: var(--spot); text-decoration-thickness: 2px; }
-  .coupon-alt { margin-top: 10px; font-size: 12px; }
-
-  @media (max-width: 1000px) {
-    .lead { grid-template-columns: 1fr; }
-    .numbers { border-left: 0; padding-left: 0; }
-    .numbers dl { display: grid; grid-template-columns: 1fr 1fr; column-gap: 24px; }
-    .stories, .briefs { grid-template-columns: 1fr 1fr; row-gap: 32px; }
-    .story:nth-child(3), .briefs article:nth-child(3) { padding-left: 0; border-left: 0; }
-    .tools { grid-template-columns: 1fr 1fr; }
-    .two { grid-template-columns: 1fr; gap: 0; }
-  }
-  @media (max-width: 600px) {
-    .cols { columns: 1; }
-    .cols p { text-align: left; }
-    .stories, .briefs { grid-template-columns: 1fr; }
-    .story, .briefs article { padding: 0 0 24px !important; border-left: 0 !important; border-bottom: 1px solid rgba(34, 31, 27, 0.35); }
-    .big { font-size: 42px; }
-    .coupon { padding: 28px 20px 24px; }
-  }
+  .welcome { display: grid; grid-template-columns: 120px 1fr; gap: 14px; align-items: start; }
+  .portrait { margin: 0; box-shadow: inset -1px -1px #fff, inset 1px 1px grey, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a; padding: 2px; background: #fff; }
+  .portrait img { filter: grayscale(1) contrast(1.1); image-rendering: pixelated; }
+  .h1 { font-family: var(--ui); font-size: 22px; font-weight: 700; line-height: 1.1; margin-bottom: 8px; -webkit-font-smoothing: none; }
+  .sub { margin-bottom: 0.8em; }
+  .welcome-foot { margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+  .welcome-foot .btns { margin-top: 0; }
+  @media (max-width: 520px) { .welcome { grid-template-columns: 1fr; } .portrait { width: 120px; } }
 </style>

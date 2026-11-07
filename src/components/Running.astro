@@ -1,0 +1,114 @@
+---
+// "Running now": the live table read from arm-free-01, drawn as a Task Manager process list.
+// Baked at build, refreshed in the browser every minute.
+import { getStatus, uptime, since, ist } from '../data/status';
+import { services, box } from '../data/profile';
+
+interface Props { full?: boolean }
+const { full = false } = Astro.props;
+const s = await getStatus();
+const now = new Date(s.generated);
+const rows = s.services.map((x) => ({ ...x, ...(services[x.id] ?? { label: x.id, does: '' }) }));
+const brief = s.brief_last ? { ...services['morning-brief'], since: s.brief_last } : null;
+const word = (st: string) => (st === 'active' ? 'Running' : st);
+const pct = (a: number, b: number) => Math.round((a / b) * 100);
+---
+<div class="running" data-running>
+  <p class="ui summary">
+    <b>{box.host}</b> · {box.place} · up <b data-f="uptime">{uptime(s.uptime_s)}</b> · load <b data-f="load">{s.load[0].toFixed(2)}</b>
+  </p>
+  <div class="sunken-panel">
+    <table class="list interactive" aria-label="Processes">
+      <thead><tr><th>Process</th><th>Description</th><th>Up for</th><th>Status</th></tr></thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr data-id={r.id}>
+            <td class="nowrap"><span class="rowicon">{r.label}</span></td>
+            <td>{r.does}</td>
+            <td class="nowrap" data-since={r.since}>{since(r.since, now)}</td>
+            <td class="nowrap" data-state>{word(r.state)}</td>
+          </tr>
+        ))}
+        {brief && (
+          <tr data-id="morning-brief">
+            <td class="nowrap">{brief.label}</td>
+            <td>{brief.does}</td>
+            <td class="nowrap" data-brief={brief.since}>{ist(brief.since)} IST</td>
+            <td class="nowrap">Sent</td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+  {full && (
+    <div class="perf">
+      <fieldset>
+        <legend>Memory</legend>
+        <div class="progress-indicator segmented"><span class="progress-indicator-bar" data-bar="mem" style={`width:${pct(s.mem_used_mb, s.mem_total_mb)}%`}></span></div>
+        <p class="ui"><span data-f="mem">{(s.mem_used_mb / 1024).toFixed(1)}</span> GB of {(s.mem_total_mb / 1024).toFixed(0)} GB in use</p>
+      </fieldset>
+      <fieldset>
+        <legend>Disk</legend>
+        <div class="progress-indicator segmented"><span class="progress-indicator-bar" data-bar="disk" style={`width:${pct(s.disk_used_gb, s.disk_total_gb)}%`}></span></div>
+        <p class="ui"><span data-f="disk">{s.disk_used_gb}</span> GB of {s.disk_total_gb} GB used</p>
+      </fieldset>
+      <fieldset>
+        <legend>Load</legend>
+        <div class="progress-indicator segmented"><span class="progress-indicator-bar" data-bar="load" style={`width:${Math.min(100, Math.round((s.load[0] / s.cpus) * 100))}%`}></span></div>
+        <p class="ui">1 min <b data-f="load1">{s.load[0].toFixed(2)}</b> · 5 min <b data-f="load5">{s.load[1].toFixed(2)}</b> · 15 min <b data-f="load15">{s.load[2].toFixed(2)}</b> on {s.cpus} cores</p>
+      </fieldset>
+      <fieldset>
+        <legend>Machine</legend>
+        <p class="ui">{box.spec}. Booted <time data-f="boot" datetime={s.boot}>{new Date(s.boot).toUTCString().slice(5, 22)} UTC</time>. This site is <b data-f="site">{s.site.version}</b>.</p>
+      </fieldset>
+    </div>
+  )}
+  <p class="ui foot">Read from <a href="/status.json">/status.json</a>, written on the box every minute. Last read <time data-f="generated" datetime={s.generated}>{now.toISOString().slice(11, 16)} UTC</time>.</p>
+</div>
+
+<style>
+  .summary { margin-bottom: 6px; }
+  .perf { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .perf fieldset p { margin-top: 6px; }
+  .progress-indicator { height: 20px; }
+  .foot { margin-top: 8px; color: #333; }
+  @media (max-width: 600px) { .perf { grid-template-columns: 1fr; } }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-running]');
+  if (root) {
+    const q = <T extends Element>(sel: string) => root.querySelector<T>(sel);
+    const set = (sel: string, v: string) => { const el = q(sel); if (el) el.textContent = v; };
+    const ago = (iso: string, now: Date) => {
+      const m = Math.max(0, Math.round((now.getTime() - new Date(iso).getTime()) / 60000));
+      if (m < 60) return `${m} min`;
+      const h = Math.floor(m / 60);
+      return h < 48 ? `${h} h` : `${Math.floor(h / 24)} d`;
+    };
+    const refresh = async () => {
+      try {
+        const r = await fetch('/status.json', { cache: 'no-store' });
+        if (!r.ok) return;
+        const s = await r.json();
+        const now = new Date(s.generated);
+        set('[data-f=uptime]', s.uptime_s < 86400 ? `${Math.floor(s.uptime_s / 3600)} h` : `${Math.floor(s.uptime_s / 86400)} d`);
+        set('[data-f=load]', Number(s.load[0]).toFixed(2));
+        set('[data-f=load1]', Number(s.load[0]).toFixed(2)); set('[data-f=load5]', Number(s.load[1]).toFixed(2)); set('[data-f=load15]', Number(s.load[2]).toFixed(2));
+        set('[data-f=generated]', `${now.toISOString().slice(11, 16)} UTC`);
+        set('[data-f=mem]', (s.mem_used_mb / 1024).toFixed(1)); set('[data-f=disk]', String(s.disk_used_gb)); set('[data-f=site]', s.site?.version ?? '');
+        const bar = (k: string, p: number) => { const b = q<HTMLElement>(`[data-bar=${k}]`); if (b) b.style.width = `${Math.min(100, Math.round(p))}%`; };
+        bar('mem', (s.mem_used_mb / s.mem_total_mb) * 100); bar('disk', (s.disk_used_gb / s.disk_total_gb) * 100); bar('load', (s.load[0] / (s.cpus || 2)) * 100);
+        for (const svc of s.services) {
+          const tr = q<HTMLElement>(`[data-id="${svc.id}"]`);
+          if (!tr) continue;
+          tr.querySelector('[data-since]')!.textContent = ago(svc.since, now);
+          tr.querySelector('[data-state]')!.textContent = svc.state === 'active' ? 'Running' : svc.state;
+        }
+        if (s.brief_last) set('[data-brief]', new Date(s.brief_last).toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }) + ' IST');
+      } catch {}
+    };
+    refresh();
+    setInterval(refresh, 60_000);
+  }
+</script>

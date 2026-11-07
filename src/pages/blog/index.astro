@@ -1,39 +1,43 @@
 ---
-import Base from '../../layouts/Base.astro';
 import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Window from '../../components/Window.astro';
+import Icon from '../../components/Icon.astro';
+import { site } from '../../data/profile';
 
-const posts = (await getCollection('blog', ({ data }) => !data.draft))
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
-const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-const mins = (s = '') => Math.max(1, Math.round(s.split(/\s+/).filter(Boolean).length / 220));
+const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const tags = [...new Set(posts.flatMap((p) => p.data.tags))].sort();
+const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const kb = (s: string) => `${Math.max(1, Math.round(s.length / 1024))} KB`;
+const ld = {
+  '@context': 'https://schema.org', '@type': 'Blog', name: `${site.name} — notes`, url: `${site.url}/blog/`,
+  author: { '@type': 'Person', name: site.name, url: site.url },
+  blogPost: posts.map((p) => ({ '@type': 'BlogPosting', headline: p.data.title, datePublished: p.data.date.toISOString(), url: `${site.url}/blog/${p.id}/` })),
+};
 ---
-<Base title="Notes" description="Notes on backend systems, infrastructure and operating software in production.">
-  <div class="wrap narrow">
-    <header class="page-head">
-      <p class="kicker">Notes</p>
-      <h1 class="inked">From the desk</h1>
-      <p class="deck"><i>Write-ups on building and operating backend systems. Newest first. Also by <a href="/rss.xml">RSS</a>.</i></p>
-    </header>
-    <ol class="list">
-      {posts.map((p) => (
-        <li>
-          <p class="kicker">{fmt(p.data.date)} · {mins(p.body)} min</p>
-          <h2><a href={`/blog/${p.id}/`}>{p.data.title}</a></h2>
-          <p class="desc">{p.data.description}</p>
-        </li>
-      ))}
-    </ol>
-  </div>
+<Base title="Notes" description={`Notes by ${site.name} on running small systems: Linux, Django, deploys, firmware and the one server that does the chores.`} jsonld={ld}>
+  <Window id="notes" title="C:\Notes" icon="folder" w={820} active heading menu={['File', 'Edit', 'View', 'Go', 'Favorites', 'Help']} status={[`${posts.length} object(s)`, 'Things I worked out while keeping something running']}>
+    <p class="body intro">Things I worked out while keeping something running, written down so I do not work them out twice. Also as <a href="/rss.xml">RSS</a>.</p>
+    <div class="sunken-panel">
+      <table class="list interactive">
+        <thead><tr><th>Name</th><th>Description</th><th>Modified</th><th>Size</th><th>Tags</th></tr></thead>
+        <tbody>
+          {posts.map((p) => (
+            <tr>
+              <td class="nowrap"><a class="rowicon" href={`/blog/${p.id}/`}><Icon name="doc" size={16} />{p.data.title}</a></td>
+              <td>{p.data.description}</td>
+              <td class="nowrap">{fmt(p.data.date)}</td>
+              <td class="nowrap">{kb(p.body ?? '')}</td>
+              <td>{p.data.tags.map((t, i) => <><a href={`/tags/${t}/`}>{t}</a>{i < p.data.tags.length - 1 ? ', ' : ''}</>)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="ui tags">Tags: {tags.map((t, i) => <><a href={`/tags/${t}/`}>{t}</a>{i < tags.length - 1 ? ' · ' : ''}</>)}</p>
+  </Window>
 </Base>
-
 <style>
-  .narrow { max-width: 860px; }
-  .page-head { padding: 40px 0 24px; border-bottom: 3px solid var(--ink); }
-  h1 { font-size: clamp(48px, 7vw, 88px); letter-spacing: -0.035em; margin: 8px 0 12px; font-variation-settings: 'opsz' 72; }
-  .deck { font-size: 1.15em; color: var(--ink-2); }
-  .list li { padding: 26px 0; border-bottom: 1px solid rgba(34, 31, 27, 0.35); }
-  h2 { font-size: clamp(26px, 3vw, 34px); letter-spacing: -0.015em; margin: 6px 0 8px; }
-  h2 a { color: var(--ink); text-decoration: none; }
-  h2 a:hover { color: var(--spot-ink); }
-  .desc { color: var(--ink-2); }
+  .intro { margin-bottom: 8px; }
+  .tags { margin-top: 8px; }
 </style>

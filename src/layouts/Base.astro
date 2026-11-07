@@ -1,121 +1,119 @@
 ---
+import '../styles/98.css'; // 98.css v0.1.21 by Jordan Scales, MIT, patched for lightningcss
 import '../styles/global.css';
-import { execSync } from 'node:child_process';
-import pkg from '../../package.json';
-import { profile } from '../data/profile';
+import Seo from '../components/Seo.astro';
+import Icon from '../components/Icon.astro';
+import { site } from '../data/profile';
+import type { ComponentProps } from 'astro/types';
 
-interface Props {
-  title?: string;
-  description?: string;
-}
-const { title, description = profile.summary } = Astro.props;
-const fullTitle = title ? `${title} — ${profile.name}` : `${profile.name} — ${profile.role}`;
-const canonical = new URL(Astro.url.pathname, Astro.site);
-
-// Release CI sets SITE_VERSION to the tag; local builds fall back to package.json.
-const version = process.env.SITE_VERSION ?? `v${pkg.version}`;
-let sha = 'dev';
-try { sha = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch {}
-const repo = 'https://github.com/ajuroshan/ajuroshan.me';
-const issue = pkg.version.split('.')[1] ?? '0';
-const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-
-const nav = [
-  { label: 'Front page', href: '/' },
-  { label: 'The work', href: '/projects/' },
-  { label: 'Notes', href: '/blog/' },
-  { label: 'Write in', href: `mailto:${profile.email}` },
+type Props = ComponentProps<typeof Seo> & { home?: boolean };
+const { home = false, ...seo } = Astro.props;
+const version = import.meta.env.SITE_VERSION || `v${(await import('../../package.json')).default.version}`;
+const menu = [
+  { href: '/', label: 'Desktop', icon: 'computer' },
+  { href: '/blog/', label: 'Notes', icon: 'folder' },
+  { href: '/projects/', label: 'Work', icon: 'computer' },
+  { href: '/now/', label: 'System Monitor', icon: 'monitor' },
+  { sep: true },
+  { href: `mailto:${site.email}`, label: 'Send mail', icon: 'mail' },
+  { href: `https://github.com/${site.github}`, label: 'GitHub', icon: 'floppy' },
+  { href: '/rss.xml', label: 'RSS feed', icon: 'doc' },
+  { sep: true },
+  { href: '/shutdown/', label: 'Shut Down...', icon: 'logo' },
 ];
-const here = Astro.url.pathname;
-const isOn = (href: string) => (href === '/' ? here === '/' : href.startsWith('/') && here.startsWith(href));
 ---
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{fullTitle}</title>
-    <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="alternate" type="application/rss+xml" title={`${profile.name} — notes`} href="/rss.xml" />
-    <link rel="sitemap" href="/sitemap-index.xml" />
-    <meta name="theme-color" content="#eee7d8" />
-    <meta property="og:title" content={fullTitle} />
-    <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonical} />
-    <meta property="og:type" content="website" />
+    <Seo {...seo} />
   </head>
   <body>
-    <!-- ink bleed filter used by .inked -->
-    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-      <filter id="ink" x="-2%" y="-2%" width="104%" height="104%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="2" seed="3" result="n" />
-        <feDisplacementMap in="SourceGraphic" in2="n" scale="1.7" xChannelSelector="R" yChannelSelector="G" />
-      </filter>
-    </svg>
-
-    <header class="masthead wrap">
-      <div class="dateline mono">
-        <span>{profile.location}</span>
-        <span class="hide-sm">No. {issue} · {today}</span>
-        <a href={`${repo}/releases/tag/${version}`} title={`build ${sha}`}>{version}</a>
-      </div>
-      <hr class="rule" />
-      {here === '/' ? (
-        <h1 class="flag inked misreg"><a href="/">{profile.name}</a></h1>
-      ) : (
-        <p class="flag flag-sm inked misreg"><a href="/">{profile.name}</a></p>
-      )}
-      <hr class="rule-double" />
-      <nav class="nav sc no-print" aria-label="primary">
-        {nav.map((n) => <a href={n.href} aria-current={isOn(n.href) ? 'page' : undefined}>{n.label}</a>)}
-      </nav>
-      <hr class="rule" />
-    </header>
-
-    <main id="main">
+    <main class:list={['desktop', home ? 'desktop--home' : 'desktop--inner']} id="top">
       <slot />
     </main>
 
-    <footer class="colophon wrap">
-      <hr class="rule-double" />
-      <div class="colo-in">
-        <p><span class="sc">Colophon.</span> Set in Newsreader and IBM Plex Mono. Two inks, black and riso blue, on uncoated stock. Built with Astro, printed from an Oracle Cloud machine in Hyderabad.</p>
-        <p class="mono"><a href={repo}>source</a> · <a href={`${repo}/releases/tag/${version}`}>{version}</a> · <a href="/rss.xml">rss</a></p>
+    <nav class="startmenu" id="startmenu" aria-label="Start menu">
+      <div class="band">{site.domain}</div>
+      <ul>
+        {menu.map((m) => m.sep ? <li class="sep" role="separator"></li> : <li><a href={m.href}><Icon name={m.icon!} size={24} />{m.label}</a></li>)}
+      </ul>
+    </nav>
+
+    <div class="taskbar">
+      <button class="start" type="button" aria-expanded="false" aria-controls="startmenu" data-start><Icon name="logo" size={16} />Start</button>
+      <span class="task-sep" aria-hidden="true"></span>
+      <div class="tasks" data-tasks></div>
+      <div class="tray">
+        <a href="https://github.com/ajuroshan/ajuroshan.me/releases/latest" class="only-wide" title="Site version">{version}</a>
+        <Icon name="clock" size={16} />
+        <time data-clock>12:00</time>
       </div>
-    </footer>
+    </div>
 
-    <style>
-      .masthead { padding-top: 22px; }
-      .dateline {
-        display: flex; justify-content: space-between; gap: 12px;
-        font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2);
-        padding-bottom: 8px;
-      }
-      .dateline a { color: var(--ink-2); text-decoration: none; }
-      .dateline a:hover { color: var(--spot-ink); }
-      .flag {
-        margin: 18px 0 14px; text-align: center;
-        font-size: clamp(54px, 12.5vw, 168px); font-weight: 700; line-height: 0.9;
-        letter-spacing: -0.035em; font-variation-settings: 'opsz' 72;
-      }
-      .flag-sm { font-size: clamp(40px, 6.5vw, 84px); margin: 14px 0 10px; }
-      .flag a { color: var(--ink); text-decoration: none; }
-      .nav { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 28px; padding: 8px 0 9px; font-size: 1.02em; }
-      .nav a { color: var(--ink); text-decoration: none; }
-      .nav a:hover { color: var(--spot-ink); }
-      .nav a[aria-current='page'] { color: var(--spot-ink); font-weight: 600; }
+    <script>
+      // Windows: focus, drag (desktop only), minimize, close; taskbar buttons; start menu; clock.
+      const wins = [...document.querySelectorAll<HTMLElement>('[data-win]')];
+      const tasks = document.querySelector<HTMLElement>('[data-tasks]')!;
+      const home = document.querySelector('.desktop--home');
+      const wide = () => matchMedia('(min-width: 701px)').matches;
+      let z = 10;
 
-      .colophon { margin-top: clamp(64px, 9vw, 112px); padding-bottom: 40px; }
-      .colo-in { display: flex; justify-content: space-between; gap: 24px 48px; flex-wrap: wrap; padding-top: 16px; font-size: 15px; color: var(--ink-2); }
-      .colo-in p:first-child { max-width: 62ch; }
-      .colo-in .mono { font-size: 12px; }
-
-      @media (max-width: 640px) {
-        .hide-sm { display: none; }
-        .nav { gap: 4px 18px; font-size: 0.95em; }
+      const buttons = new Map<HTMLElement, HTMLButtonElement>();
+      for (const w of wins) {
+        if (w.dataset.task === '0') continue;
+        const b = document.createElement('button');
+        b.type = 'button';
+        const ic = w.querySelector('.title-bar-text svg');
+        if (ic) b.appendChild(ic.cloneNode(true));
+        const s = document.createElement('span'); s.textContent = w.dataset.title ?? ''; b.appendChild(s);
+        b.addEventListener('click', () => {
+          if (w.classList.contains('min') || w.classList.contains('closed') || !w.classList.contains('active')) open(w);
+          else { w.classList.add('min'); sync(); }
+        });
+        tasks.appendChild(b); buttons.set(w, b);
       }
-    </style>
+      const sync = () => {
+        for (const [w, b] of buttons) {
+          b.classList.toggle('hidden', w.classList.contains('closed'));
+          b.setAttribute('aria-pressed', String(w.classList.contains('active') && !w.classList.contains('min')));
+        }
+      };
+      const focus = (w: HTMLElement) => { wins.forEach((x) => x.classList.remove('active')); w.classList.add('active'); w.style.zIndex = String(++z); sync(); };
+      const open = (w: HTMLElement) => { w.classList.remove('min', 'closed'); focus(w); if (!home || !wide()) w.scrollIntoView({ block: 'start', behavior: 'smooth' }); };
+
+      for (const w of wins) {
+        w.addEventListener('pointerdown', () => focus(w));
+        w.querySelector('[data-min]')?.addEventListener('click', () => { w.classList.add('min'); w.classList.remove('active'); sync(); });
+        w.querySelector('[data-close]')?.addEventListener('click', () => { w.classList.add('closed'); w.classList.remove('active'); sync(); });
+        const bar = w.querySelector<HTMLElement>('[data-drag]');
+        if (bar && home) bar.addEventListener('pointerdown', (e) => {
+          if (!wide() || (e.target as HTMLElement).closest('button')) return;
+          const r = w.getBoundingClientRect(); const p = (w.offsetParent as HTMLElement).getBoundingClientRect();
+          const dx = e.clientX - r.left, dy = e.clientY - r.top;
+          const move = (ev: PointerEvent) => { w.style.setProperty('--x', `${Math.max(0, ev.clientX - dx - p.left)}px`); w.style.setProperty('--y', `${Math.max(0, ev.clientY - dy - p.top)}px`); };
+          const up = () => { removeEventListener('pointermove', move); removeEventListener('pointerup', up); };
+          addEventListener('pointermove', move); addEventListener('pointerup', up); e.preventDefault();
+        });
+      }
+      // desktop icons and links that open a window on this page
+      document.querySelectorAll<HTMLAnchorElement>('[data-open]').forEach((a) => a.addEventListener('click', (e) => {
+        const w = document.getElementById(a.dataset.open!); if (!w) return; e.preventDefault(); open(w);
+      }));
+      const first = wins.find((w) => w.classList.contains('active')) ?? wins[0];
+      if (first) focus(first);
+
+      // start menu
+      const start = document.querySelector<HTMLButtonElement>('[data-start]')!;
+      const sm = document.getElementById('startmenu')!;
+      const setMenu = (on: boolean) => { sm.classList.toggle('open', on); start.setAttribute('aria-expanded', String(on)); };
+      start.addEventListener('click', (e) => { e.stopPropagation(); setMenu(!sm.classList.contains('open')); });
+      document.addEventListener('click', (e) => { if (!sm.contains(e.target as Node)) setMenu(false); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
+
+      // clock
+      const clock = document.querySelector<HTMLElement>('[data-clock]')!;
+      const tick = () => { clock.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); };
+      tick(); setInterval(tick, 15_000);
+    </script>
   </body>
 </html>

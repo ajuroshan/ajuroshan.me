@@ -1,59 +1,78 @@
 ---
+import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
-import { projects, type Project } from '../data/profile';
+import Window from '../components/Window.astro';
+import Icon from '../components/Icon.astro';
+import { site, projects, tools } from '../data/profile';
 
-const groups: { kind: Project['kind']; title: string; note: string }[] = [
-  { kind: 'prod', title: 'In production', note: 'Built and maintained by me, with real users.' },
-  { kind: 'oss', title: 'Open source', note: 'Tools and hardware with public code.' },
-  { kind: 'lab', title: 'Experiments & infrastructure', note: 'Built to learn, or to run everything else.' },
-];
-const short = (u: string) => u.replace(/^https?:\/\//, '').replace(/\/$/, '');
+const groups = ['University', 'Motorcycle', 'Tools and toys'] as const;
+const gicon = (g: string) => (g === 'University' ? 'globe' : g === 'Motorcycle' ? 'flag' : 'wrench');
+const host = (u: string) => (u.startsWith('/') ? u : new URL(u).host);
 ---
-<Base title="The work" description="Index of production systems, open-source tools and experiments by Ajmal Roshan.">
-  <div class="wrap">
-    <header class="page-head">
-      <p class="kicker">Index</p>
-      <h1 class="inked">The work</h1>
-      <p class="deck"><i>Everything, production first. Each entry lists scale, stack and where to find it.</i></p>
-    </header>
-
-    {groups.map((g) => (
-      <section class="section">
-        <header class="section-title"><h2>{g.title}</h2><span class="muted"><i>{g.note}</i></span></header>
-        <div class="grid">
-          {projects.filter((p) => p.kind === g.kind).map((p) => (
-            <article class="entry">
-              {p.metric && <p class="kicker">{p.metric}</p>}
-              <h3>{p.title}</h3>
-              <p>{p.desc}</p>
-              <dl>
-                <dt class="sc">Stack</dt><dd>{p.stack.join(', ')}</dd>
-                {p.url && <><dt class="sc">Live</dt><dd><a href={p.url}>{short(p.url)}</a></dd></>}
-                {p.repo && <><dt class="sc">Code</dt><dd><a href={p.repo}>{short(p.repo)}</a></dd></>}
-              </dl>
-            </article>
-          ))}
+<Base title="Work" description={`What ${site.name} has built and runs: the software behind a university's admissions, hostels and mess bills; a motorcycle telemetry logger and dashboard; and small tools for his own desk.`}>
+  <Window id="work" title="My Work" icon="computer" w={820} active heading menu={['File', 'Edit', 'View', 'Go', 'Help']} status={[`${projects.length} object(s)`, 'Each thing in full, with pictures']}>
+    <p class="body intro">The university systems are the ones people depend on; the rest are for the bike and for me. Click an icon to jump to it.</p>
+    <div class="sunken-panel">
+      {groups.map((g) => (
+        <div class="grp">
+          <p class="ui grp-h"><Icon name="folder" size={16} />{g}</p>
+          <div class="iconsgrid">
+            {projects.filter((p) => p.group === g).map((p) => (
+              <a class="icon" href={`#${p.slug}`}><Icon name={gicon(g)} size={32} /><span>{p.name}</span></a>
+            ))}
+          </div>
         </div>
-      </section>
-    ))}
-  </div>
+      ))}
+    </div>
+  </Window>
+
+  {projects.map((p) => (
+    <Window id={p.slug} title={`${p.name} Properties`} icon={gicon(p.group)} w={820} task={false} status={[p.kind, String(p.year), p.stack.join(', ')]}>
+      <div class:list={['proj', { 'has-img': !!p.image }]}>
+        <div class="body">
+          <h2 class="ph">{p.name} <span class="ui">({p.kind}, {p.year})</span></h2>
+          <p><b>{p.summary}</b></p>
+          {p.body.map((b) => <p>{b}</p>)}
+          <fieldset class="facts">
+            <legend>Details</legend>
+            <dl class="ui">
+              <dt>Type</dt><dd>{p.kind}</dd>
+              <dt>Year</dt><dd>{p.year}</dd>
+              <dt>Stack</dt><dd>{p.stack.join(', ')}</dd>
+              {p.url && <><dt>Location</dt><dd><a href={p.url}>{host(p.url)}</a></dd></>}
+              {p.repo && <><dt>Source</dt><dd><a href={p.repo}>{p.repo.replace('https://github.com/', 'github.com/')}</a></dd></>}
+            </dl>
+          </fieldset>
+        </div>
+        {p.image && (
+          <figure class="pic">
+            <Image src={p.image} width={720} widths={[360, 720]} sizes="(max-width: 700px) 100vw, 360px" alt={p.imageAlt ?? ''} loading="lazy" decoding="async" />
+            {p.imageCredit && <figcaption class="ui">{p.imageCredit}</figcaption>}
+          </figure>
+        )}
+      </div>
+      <div class="btns"><a href="#work">Back to the list</a></div>
+    </Window>
+  ))}
+
+  <Window id="tools" title="What I reach for" icon="wrench" w={820} task={false} status={['Tools', 'In rough order of how often']}>
+    <dl class="ui tools">
+      {Object.entries(tools).map(([k, v]) => <><dt>{k}</dt><dd>{v.join(', ')}</dd></>)}
+    </dl>
+  </Window>
 </Base>
 
 <style>
-  .page-head { padding: 40px 0 8px; max-width: 760px; }
-  h1 { font-size: clamp(48px, 7vw, 88px); letter-spacing: -0.035em; margin: 8px 0 12px; font-variation-settings: 'opsz' 72; }
-  .deck { font-size: 1.15em; color: var(--ink-2); }
-  .grid { display: grid; grid-template-columns: repeat(2, 1fr); }
-  .entry { padding: 0 32px 32px 0; }
-  .entry:nth-child(even) { padding: 0 0 32px 32px; border-left: 1px solid rgba(34, 31, 27, 0.35); }
-  .entry h3 { font-size: 28px; letter-spacing: -0.015em; margin: 6px 0 10px; }
-  .entry p { margin-bottom: 12px; }
-  dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 16px; margin: 0; font-size: 16px; }
-  dt { color: var(--muted); }
-  dd { margin: 0; }
-  .section-title span { font-size: 16px; }
-  @media (max-width: 760px) {
-    .grid { grid-template-columns: 1fr; }
-    .entry, .entry:nth-child(even) { padding: 0 0 24px; border-left: 0; border-bottom: 1px solid rgba(34, 31, 27, 0.35); margin-bottom: 24px; }
-  }
+  .intro { margin-bottom: 8px; }
+  .grp-h { display: flex; align-items: center; gap: 6px; padding: 6px 8px 0; background: #fff; font-weight: 700; }
+  .proj { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .proj.has-img { grid-template-columns: 1fr 360px; }
+  .ph { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .ph .ui { font-weight: 400; }
+  .facts { margin-top: 10px; }
+  .facts dl, .tools { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 0; }
+  .facts dd, .tools dd { margin: 0; }
+  .pic { margin: 0; align-self: start; background: #fff; padding: 2px; box-shadow: inset -1px -1px #fff, inset 1px 1px grey, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a; }
+  .pic figcaption { margin-top: 4px; }
+  @media (max-width: 700px) { .proj.has-img { grid-template-columns: 1fr; } .pic { order: -1; } }
 </style>
