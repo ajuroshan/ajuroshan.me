@@ -1,8 +1,8 @@
 name: release
 
 # Tag vX.Y.Z (via `npm version <patch|minor|major>` + `git push --follow-tags`)
-# -> build -> GitHub Release with notes + site tarball -> deploy that exact build.
-# Re-deploy an existing release: Actions -> release -> Run workflow -> tag.
+# -> build -> GitHub Release with notes + site tarball -> the server pulls it (see `live` job).
+# Rebuild an existing release's tarball: Actions -> release -> Run workflow -> tag.
 on:
   push:
     tags: ['v*.*.*']
@@ -66,38 +66,21 @@ jobs:
               --title "$TAG" --generate-notes --verify-tag
           fi
 
-  deploy:
+  # The web host pulls the latest release itself (site-pull-deploy timer on the box, every 2 min):
+  # it checks the asset's sha256 digest, swaps the `current` symlink and health-checks locally.
+  # Nothing here can reach the server, so there are no deploy keys. This job just waits for it to go live.
+  # Roll back: `gh release edit vX.Y.Z --latest` on an older release.
+  live:
     needs: github-release
     runs-on: ubuntu-latest
     environment:
       name: production
       url: https://ajmalroshan.dev
     steps:
-      - uses: actions/checkout@v5
-        with:
-          ref: ${{ env.TAG }}
-          sparse-checkout: deploy.sh
-          sparse-checkout-cone-mode: false
-      - uses: actions/download-artifact@v5
-        with:
-          name: site
-      - run: mkdir dist && tar -xzf "ajuroshan.me-$TAG.tar.gz" -C dist
-      - name: ssh setup
+      - name: wait for the server to pull this release
         run: |
-          install -d -m 700 ~/.ssh
-          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          printf '%s\n' "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
-      - run: ./deploy.sh
-        env:
-          SKIP_BUILD: '1'
-          RELEASE: ${{ env.TAG }}
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_ROOT: ${{ vars.DEPLOY_ROOT }}
-      - name: smoke test
-        run: |
-          for i in 1 2 3; do
-            curl -fsS "https://ajmalroshan.dev/?v=$TAG" | grep -q "$TAG" && { echo "live: $TAG"; exit 0; }
-            sleep 3
+          for i in $(seq 1 40); do
+            curl -fsS "https://ajmalroshan.dev/?v=$TAG-$i" | grep -q "$TAG" && { echo "live: $TAG"; exit 0; }
+            sleep 15
           done
-          echo "::error::$TAG not visible on the live site"; exit 1
+          echo "::error::$TAG not live after 10 minutes (is it marked latest? check site-pull-deploy on the box)"; exit 1

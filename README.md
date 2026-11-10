@@ -27,4 +27,4 @@ npm run release:patch   # content / fixes
 npm run release:minor   # new things
 ```
 
-The tag triggers `release.yml`: build (tag must match `package.json`), GitHub Release with the tarball, deploy over SSH, smoke test.
+The tag triggers `release.yml`: build (tag must match `package.json`), GitHub Release with the tarball, then the server pulls the latest release itself (no inbound SSH; it verifies the asset's sha256) and the `live` job waits until it's serving.
