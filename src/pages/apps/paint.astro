@@ -1,0 +1,10 @@
+---
+import Base from '../../layouts/Base.astro';
+import Window from '../../components/Window.astro';
+---
+<Base title="Paint" description="A small pixel paint program on Ajmal Roshan's site. Pencil, brush, fill, shapes, 28 colours. Save your drawing as a PNG or hang it on the desktop as wallpaper.">
+  <Window id="paint" title="untitled - Paint" icon="paint" w={560} active heading fit>
+    <paint-app></paint-app>
+    <noscript><p class="ui">Paint needs JavaScript. A pencil and paper still work without it.</p></noscript>
+  </Window>
+</Base>

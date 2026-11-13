@@ -18,6 +18,7 @@ const icons = [
   { href: '/activity/', label: 'GitHub Activity', icon: 'floppy' },
   { href: '/games/minesweeper/', label: 'Minesweeper', icon: 'mine' },
   { href: '/apps/dos/', label: 'MS-DOS Prompt', icon: 'dos' },
+  { href: '/apps/paint/', label: 'Paint', icon: 'paint' },
   { href: 'https://github.com/ajuroshan/ajuroshan.me/releases/tag/v0.4.0', label: 'Old site', icon: 'bin' },
 ];
 const menu = [
@@ -27,7 +28,9 @@ const menu = [
   { href: '/activity/', label: 'GitHub Activity', icon: 'floppy' },
   { href: '/games/minesweeper/', label: 'Minesweeper', icon: 'mine' },
   { href: '/apps/dos/', label: 'MS-DOS Prompt', icon: 'dos' },
+  { href: '/apps/paint/', label: 'Paint', icon: 'paint' },
   { sep: true },
+  { href: '/apps/display/', label: 'Display Properties', icon: 'monitor' },
   { href: `mailto:${site.email}`, label: 'Send mail', icon: 'mail' },
   { href: `https://github.com/${site.github}`, label: 'GitHub', icon: 'floppy' },
   { sep: true },
@@ -38,7 +41,11 @@ const menu = [
 <html lang="en">
   <head>
     <Seo {...seo} />
-    <script is:inline>document.documentElement.classList.add('js');</script>
+    <script is:inline>
+      document.documentElement.classList.add('js');
+      // the visitor's own wallpaper and colours (set in Display Properties), applied before first paint
+      try { var d = JSON.parse(localStorage.getItem('desk-css') || 'null'); for (var k in d) if (k.slice(0, 2) === '--') document.documentElement.style.setProperty(k, d[k]); } catch (e) {}
+    </script>
   </head>
   <body>
     <main class:list={['desktop', { 'desktop--home': home }]} id="top" data-desk>
@@ -70,6 +77,8 @@ const menu = [
     <script>
       import '../scripts/minesweeper';
       import '../scripts/dos';
+      import '../scripts/paint';
+      import { initDeskMenu } from '../scripts/desk';
       import { initScreensaver } from '../scripts/pipes';
       initScreensaver();
       // A small window manager. Every internal link opens a window on this desktop instead of loading a page:
@@ -80,6 +89,7 @@ const menu = [
       const buttons = new Map<HTMLElement, HTMLButtonElement>();
       let z = 10;
       let cascade = 0;
+      initDeskMenu(desk);
 
       const wins = () => [...desk.querySelectorAll<HTMLElement>('[data-win]')];
       const visible = (w: HTMLElement) => !w.classList.contains('min') && !w.classList.contains('closed') && (!w.hasAttribute('data-deferred') || w.classList.contains('opened'));

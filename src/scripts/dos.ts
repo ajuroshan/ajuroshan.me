@@ -75,7 +75,7 @@ Type <b>help</b> to see what this thing can do.
       help: () => this.print(`These commands are available:
 
   <b>DIR</b>         list what's here          <b>CD</b> &lt;dir&gt;     NOTES, WORK, GAMES, ..
-  <b>TYPE</b> &lt;file&gt; read a file               <b>START</b> &lt;app&gt;  open a window (notes, work, winmine...)
+  <b>TYPE</b> &lt;file&gt; read a file               <b>START</b> &lt;app&gt;  open a window (notes, work, paint...)
   <b>WHOAMI</b>      who built this            <b>CONTACT</b>     how to reach me
   <b>VER</b>         version                   <b>DATE</b> / <b>TIME</b> what it says
   <b>COLOR</b> &lt;xy&gt;  change colours (try 0a)  <b>CLS</b>         clear the screen
@@ -129,7 +129,7 @@ Everything opens in a window. Try ${this.link('/games/minesweeper/', 'Minesweepe
       },
       start: (a) => {
         const t = (a[0] || '').toLowerCase().replace(/\.exe$/, '');
-        const map: Record<string, string> = { notes: '/blog/', work: '/projects/', winmine: '/games/minesweeper/', minesweeper: '/games/minesweeper/', activity: '/activity/', readme: '/#welcome', welcome: '/#welcome' };
+        const map: Record<string, string> = { notes: '/blog/', work: '/projects/', winmine: '/games/minesweeper/', minesweeper: '/games/minesweeper/', activity: '/activity/', readme: '/#welcome', welcome: '/#welcome', paint: '/apps/paint/', pbrush: '/apps/paint/', display: '/apps/display/', desk: '/apps/display/' };
         const href = map[t] ?? (this.fs.notes.find((n) => n.id.startsWith(t)) ? `/blog/${this.fs.notes.find((n) => n.id.startsWith(t))!.id}/` : '');
         if (!href) return this.text(`Bad command or file name`);
         const l = document.createElement('a'); l.href = href; l.hidden = true; document.body.appendChild(l); l.click(); l.remove();

@@ -14,7 +14,8 @@ npm run build && npm run preview
 - Notes: `src/content/blog/*.md` (frontmatter: `title`, `description`, `date`, optional `updated`, `tags`, `draft`)
 - Windows, taskbar, Start menu, window manager: `src/components/Window.astro`, `src/layouts/Base.astro`
 - Pixel icons (16×16 maps in text, emitted as SVG): `src/components/Icon.astro`
-- Apps: `src/scripts/minesweeper.ts`, `src/scripts/dos.ts`, `src/scripts/pipes.ts` (screensaver)
+- Apps: `src/scripts/minesweeper.ts`, `src/scripts/dos.ts`, `src/scripts/paint.ts`, `src/scripts/pipes.ts` (screensaver)
+- Wallpaper, colour schemes, Display Properties and the desktop right-click menu: `src/scripts/desk.ts`
 - Widgets: `src/styles/98.css` (98.css v0.1.21 by Jordan Scales, MIT, one media query patched for lightningcss)
 - SEO: `src/components/Seo.astro`, sitemap, RSS at `/rss.xml`, OG images rendered at build in `src/pages/og/`
 
