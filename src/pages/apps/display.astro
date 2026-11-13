@@ -1,0 +1,10 @@
+---
+import Base from '../../layouts/Base.astro';
+import Window from '../../components/Window.astro';
+---
+<Base title="Display Properties" description="Change the wallpaper and colour scheme of the desktop on Ajmal Roshan's site. Your choice is remembered in this browser only.">
+  <Window id="display" title="Display Properties" icon="monitor" w={420} active heading>
+    <display-props></display-props>
+    <noscript><p class="ui">Display Properties needs JavaScript. Without it the desktop stays teal, which is the correct colour anyway.</p></noscript>
+  </Window>
+</Base>
