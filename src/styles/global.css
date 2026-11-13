@@ -60,7 +60,7 @@ body.dragging { user-select: none; }
   .js .win { position: absolute; left: var(--x, 112px); top: var(--y, 16px); margin: 0; width: min(var(--w), calc(100% - 120px)); }
   .js .win > .window { max-height: calc(100svh - var(--taskbar) - var(--y, 16px) - 8px); resize: both; overflow: hidden; min-width: 260px; min-height: 140px; }
 }
-.win.max { position: fixed !important; left: 0 !important; top: 0 !important; right: 0; bottom: var(--taskbar); width: auto !important; margin: 0 !important; z-index: 900 !important; }
+.win.max { position: fixed !important; left: 0 !important; top: 0 !important; right: 0; bottom: var(--taskbar); width: auto !important; max-width: none !important; margin: 0 !important; z-index: 900 !important; }
 .win.max > .window { height: 100%; max-height: none !important; width: auto !important; resize: none !important; }
 
 /* ---------- taskbar ---------- */
@@ -242,3 +242,53 @@ paint-app { display: block; font-family: var(--ui); -webkit-font-smoothing: none
 .pt-pal button:active { box-shadow: inset -1px -1px #fff, inset 1px 1px grey, inset 2px 2px #0a0a0a !important; }
 .pt-status { margin-top: 6px; padding: 2px 4px; min-height: 18px; box-shadow: inset -1px -1px #fff, inset 1px 1px grey; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (pointer: coarse) { .pt-pal { grid-template-columns: repeat(14, minmax(0, 22px)); } .pt-pal button { width: auto; height: 22px; } .pt-tools { grid-template-columns: repeat(2, 32px); } .pt-tools button { width: 32px; height: 32px; } }
+
+/* ---------- maximised windows: the contents use the room ---------- */
+/* Desktop only: phones maximise windows too, and there the normal page layout is already right. */
+@media (min-width: 701px) {
+  .win.max .window-body { display: flex; flex-direction: column; }
+  /* list and icon panes fill the window, like a folder does */
+  .win.max .window-body > .sunken-panel, .win.max .window-body > .iconsgrid { flex: 1 1 auto; background: #fff; }
+  .win.max .iconsgrid { align-content: start; }
+
+  /* Welcome: a bigger card in the middle */
+  .win.max .welcome { width: 100%; max-width: 900px; margin: auto auto 0; grid-template-columns: 200px 1fr; gap: 28px; }
+  .win.max .welcome .portrait img { width: 200px; height: 200px; }
+  .win.max .welcome .body { font-size: 16px; }
+  .win.max .welcome .h1 { font-size: 34px; margin-bottom: 12px; }
+  .win.max .welcome-foot { width: 100%; max-width: 900px; margin: 20px auto auto; }
+
+  /* notes: a centred reading column, slightly larger type */
+  .win.max .paper { flex: 1 0 auto; }
+  .win.max .paper > * { max-width: 46rem; margin-left: auto; margin-right: auto; }
+  .win.max .paper .toc fieldset { max-width: 24rem; }
+  .win.max .paper .prose { font-size: 18px; }
+  .win.max .paper .prose pre { font-size: 13px; }
+
+  /* project sheets: text and picture side by side, picture as big as it can be */
+  .win.max .proj { width: 100%; max-width: 1180px; margin: auto; gap: 28px; }
+  .win.max .proj.has-img { grid-template-columns: minmax(0, 1fr) minmax(360px, 1.2fr); align-items: center; }
+  .win.max .proj .body { font-size: 15px; }
+  .win.max .proj .ph { font-size: 22px; margin-bottom: 10px; }
+
+  /* GitHub activity: bigger days */
+  .win.max .activity .cal { --c: clamp(10px, calc((100vw - 80px) / var(--weeks) - 3px), 24px); --g: 3px; margin: 0 auto; }
+  .win.max .activity .scroller { padding: 16px; }
+
+  /* Paint: the page grows to fill the window, in whole proportion (448 x 280) */
+  .win.max paint-app { flex: 1 1 auto; min-height: 0; display: flex; }
+  .win.max .pt { flex: 1 1 auto; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; }
+  .win.max .pt-main { min-height: 0; grid-template-rows: minmax(0, 1fr); }
+  .win.max .pt-view { height: 100%; display: grid; place-items: center; overflow: hidden; container-type: size; }
+  .win.max .pt-view canvas { width: min(100cqw, calc(100cqh * 1.6)); max-width: none; }
+
+  /* Minesweeper: bigger squares, board in the middle (30 x 16 on Expert has to fit) */
+  .win.max mine-sweeper { flex: 1 1 auto; display: grid; place-content: center; justify-items: center; --cell: min(34px, calc((100vw - 60px) / 30), calc((100svh - 250px) / 16)); }
+  .win.max .ms-grid { max-width: none; }
+  .win.max button.ms-cell { font-size: calc(var(--cell) * 0.62); }
+  .win.max button.ms-cell svg { max-width: none; max-height: none; }
+
+  /* dialogs stay dialog-sized, in the middle */
+  .win.max display-props { flex: 1 1 auto; display: grid; place-content: center; }
+  .win.max .dp { width: 420px; max-width: 100%; }
+}

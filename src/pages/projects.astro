@@ -44,7 +44,7 @@ const host = (u: string) => (u.startsWith('/') ? u : new URL(u).host);
         </div>
         {p.image && (
           <figure class="pic">
-            <Image src={p.image} width={720} widths={[360, 720]} sizes="(max-width: 700px) 100vw, 360px" alt={p.imageAlt ?? ''} loading="lazy" decoding="async" />
+            <Image src={p.image} width={720} widths={[360, 720]} sizes="(max-width: 700px) 100vw, (min-width: 1200px) 560px, 360px" alt={p.imageAlt ?? ''} loading="lazy" decoding="async" />
             {p.imageCredit && <figcaption class="ui">{p.imageCredit}</figcaption>}
           </figure>
         )}
